@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/shield.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="CyberVault - Secure file storage and sharing platform with end-to-end encryption. Protect your files with military-grade security." />
+  <meta name="keywords"
+    content="secure file sharing, encrypted storage, cybersecurity, AES encryption, RSA, file protection" />
+  <meta name="author" content="CyberVault" />
+  <meta name="theme-color" content="#0f172a" />
+
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+
+  <!-- Prevent theme flash - apply theme before CSS loads -->
+  <script>
+    (function () {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.remove('light');
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="CyberVault - Secure File Storage & Sharing" />
+  <meta property="og:description" content="Upload, encrypt, and share files safely with military-grade security." />
+  <meta property="og:type" content="website" />
+
+  <title>CyberVault - Secure File Storage & Sharing</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

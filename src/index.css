@@ -1,0 +1,442 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Base Styles */
+@layer base {
+    * {
+        @apply box-border;
+    }
+
+    html {
+        @apply scroll-smooth;
+    }
+
+    /* Dark Mode (Default) - Light text on dark background */
+    body {
+        @apply bg-dark-950 text-gray-100 font-sans antialiased;
+        background-image:
+            radial-gradient(ellipse at top, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Light Mode - Dark text on cream background */
+    .light body {
+        @apply text-gray-900;
+        background-color: #F5EFE0;
+        background-image:
+            radial-gradient(ellipse at top, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+    }
+
+    /* Default paragraph text */
+    p {
+        @apply text-gray-300;
+    }
+
+    .light p {
+        @apply text-gray-800;
+    }
+
+    /* Default headings */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply text-white;
+    }
+
+    .light h1,
+    .light h2,
+    .light h3,
+    .light h4,
+    .light h5,
+    .light h6 {
+        @apply text-gray-900;
+    }
+
+    /* Links - exclude buttons */
+    a:not(.btn-primary):not(.btn-secondary) {
+        @apply text-primary-400 hover:text-primary-300;
+    }
+
+    .light a:not(.btn-primary):not(.btn-secondary) {
+        @apply text-primary-600 hover:text-primary-500;
+    }
+
+    ::selection {
+        @apply bg-primary-500/30 text-white;
+    }
+
+    .light ::selection {
+        @apply bg-primary-500/30 text-gray-900;
+    }
+}
+
+/* Custom Component Styles */
+@layer components {
+
+    /* Glass Card Effect - Dark Mode */
+    .glass-card {
+        @apply bg-dark-800/80 backdrop-blur-xl rounded-2xl;
+        border: 1.5px solid rgba(6, 182, 212, 0.5);
+        box-shadow:
+            0 4px 30px -4px rgba(0, 0, 0, 0.5),
+            0 0 20px -5px rgba(6, 182, 212, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* Glass Card Effect - Light Mode */
+    .light .glass-card {
+        @apply bg-white/95 backdrop-blur-xl rounded-2xl;
+        border: 1.5px solid rgba(6, 182, 212, 0.4);
+        box-shadow:
+            0 4px 24px -4px rgba(0, 0, 0, 0.1),
+            0 0 20px -5px rgba(6, 182, 212, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    /* Gradient Text - Same in both modes */
+    .gradient-text {
+        @apply bg-gradient-to-r from-primary-400 via-primary-500 to-blue-500 bg-clip-text text-transparent;
+    }
+
+    /* Primary Button - ALWAYS white text on gradient background */
+    .btn-primary {
+        @apply inline-flex items-center justify-center px-6 py-3 font-semibold bg-gradient-to-r from-primary-500 to-blue-600 rounded-xl hover:from-primary-400 hover:to-blue-500 shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transform hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500/50;
+        color: white !important;
+    }
+
+    /* Ensure btn-primary has white text in light mode too */
+    .light .btn-primary {
+        color: white !important;
+    }
+
+    /* Secondary Button - Dark Mode (light text) */
+    .btn-secondary {
+        @apply inline-flex items-center justify-center px-6 py-3 font-semibold text-gray-300 border border-dark-600 rounded-xl hover:bg-dark-800 hover:border-dark-500 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-dark-500/50;
+    }
+
+    /* Secondary Button - Light Mode (dark text) */
+    .light .btn-secondary {
+        @apply text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-900;
+    }
+
+    /* Input Field - Dark Mode (light text) */
+    .input-field {
+        @apply w-full px-4 py-3 bg-dark-800/80 border border-dark-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-300;
+    }
+
+    /* Input Field - Light Mode (dark text) */
+    .light .input-field {
+        @apply bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-primary-500;
+    }
+
+    /* Card Hover Effect */
+    .card-hover {
+        @apply transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30;
+    }
+
+    /* Section Title - Dark Mode (light text) */
+    .section-title {
+        @apply text-3xl md:text-4xl lg:text-5xl font-bold font-heading text-white mb-4;
+    }
+
+    /* Section Title - Light Mode (dark text) */
+    .light .section-title {
+        @apply text-gray-900;
+    }
+
+    /* Section Subtitle - Dark Mode (light muted text) */
+    .section-subtitle {
+        @apply text-lg text-gray-400 max-w-2xl mx-auto;
+    }
+
+    /* Section Subtitle - Light Mode (dark muted text) */
+    .light .section-subtitle {
+        @apply text-gray-600;
+    }
+
+    /* ================================
+       THEME TEXT UTILITIES
+       Dark Mode: Light colors
+       Light Mode: Dark colors
+       ================================ */
+
+    /* Primary text - main content */
+    .text-theme-primary {
+        @apply text-white;
+    }
+
+    .light .text-theme-primary {
+        @apply text-gray-900;
+    }
+
+    /* Secondary text - supporting content */
+    .text-theme-secondary {
+        @apply text-gray-300;
+    }
+
+    .light .text-theme-secondary {
+        @apply text-gray-700;
+    }
+
+    /* Muted text - less important content */
+    .text-theme-muted {
+        @apply text-gray-400;
+    }
+
+    .light .text-theme-muted {
+        @apply text-gray-600;
+    }
+
+    /* Subtle text - hints, placeholders */
+    .text-theme-subtle {
+        @apply text-gray-500;
+    }
+
+    .light .text-theme-subtle {
+        @apply text-gray-500;
+    }
+
+    /* ================================
+       BACKGROUND UTILITIES
+       ================================ */
+
+    .bg-theme-primary {
+        @apply bg-dark-950;
+    }
+
+    .light .bg-theme-primary {
+        background-color: #F5EFE0;
+    }
+
+    .bg-theme-secondary {
+        @apply bg-dark-900;
+    }
+
+    .light .bg-theme-secondary {
+        @apply bg-white;
+    }
+
+    .bg-theme-card {
+        @apply bg-dark-900/60;
+    }
+
+    .light .bg-theme-card {
+        @apply bg-white/90;
+    }
+
+    .bg-theme-hover {
+        @apply bg-dark-800;
+    }
+
+    .light .bg-theme-hover {
+        @apply bg-gray-100;
+    }
+
+    /* ================================
+       BORDER UTILITIES
+       ================================ */
+
+    .border-theme {
+        @apply border-dark-700/50;
+    }
+
+    .light .border-theme {
+        @apply border-gray-200;
+    }
+
+    .border-theme-strong {
+        @apply border-dark-600;
+    }
+
+    .light .border-theme-strong {
+        @apply border-gray-300;
+    }
+
+    /* Glow Effect */
+    .glow {
+        @apply relative;
+    }
+
+    .glow::before {
+        content: '';
+        @apply absolute inset-0 rounded-full bg-primary-500/20 blur-xl -z-10;
+    }
+
+    /* Animated Border */
+    .animated-border {
+        @apply relative overflow-hidden;
+    }
+
+    .animated-border::before {
+        content: '';
+        @apply absolute inset-0 rounded-2xl;
+        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+}
+
+/* Custom Utilities */
+@layer utilities {
+
+    /* Hide Scrollbar */
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Text Balance */
+    .text-balance {
+        text-wrap: balance;
+    }
+
+    /* Animation Delays */
+    .animation-delay-150 {
+        animation-delay: 150ms;
+    }
+
+    .animation-delay-300 {
+        animation-delay: 300ms;
+    }
+
+    .animation-delay-500 {
+        animation-delay: 500ms;
+    }
+}
+
+/* ================================
+   TOAST ANIMATIONS
+   ================================ */
+@keyframes slide-in-right {
+    0% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toast-progress {
+    0% {
+        width: 100%;
+    }
+
+    100% {
+        width: 0%;
+    }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-toast-progress {
+    animation: toast-progress linear forwards;
+}
+
+/* ================================
+   PAGE TRANSITION
+   ================================ */
+.page-enter {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* ================================
+   MOBILE BOTTOM NAV SAFE AREA
+   ================================ */
+.safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 4px);
+}
+
+/* Add padding to body on mobile so content isn't hidden behind bottom nav */
+@media (max-width: 767px) {
+    body {
+        padding-bottom: 72px;
+    }
+}
+
+/* ================================
+   ANIMATED COUNTER
+   ================================ */
+@keyframes count-up {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-count-up {
+    animation: count-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Scrollbar - Dark Mode */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-dark-900;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-dark-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-dark-500;
+}
+
+/* Custom Scrollbar - Light Mode */
+.light ::-webkit-scrollbar-track {
+    background-color: #F5EFE0;
+}
+
+.light ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+}
+
+/* Light mode divider fix */
+.light .divide-dark-700\/50> :not([hidden])~ :not([hidden]) {
+    border-color: rgba(229, 231, 235, 1);
+}
