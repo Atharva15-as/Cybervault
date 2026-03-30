@@ -33,7 +33,7 @@ export default function MockLoginModal({ isOpen, onClose, onLogin, provider }: M
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className={`relative w-full max-w-md p-6 rounded-2xl shadow-xl animate-scale-up ${isDark ? 'bg-dark-900 border border-dark-700' : 'bg-white'}`}>
+            <div className={`relative w-full max-w-md p-6 rounded-2xl shadow-xl animate-scale-up ${isDark ? 'bg-dark-900 border border-[#334155]' : 'bg-[#F9FEFC]'}`}>
 
                 {/* Header */}
                 <div className="text-center mb-6">
@@ -51,10 +51,10 @@ export default function MockLoginModal({ isOpen, onClose, onLogin, provider }: M
                             </svg>
                         )}
                     </div>
-                    <h3 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <h3 className={`text-xl font-bold mb-1 ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>
                         Sign in with {provider === 'google' ? 'Google' : 'GitHub'}
                     </h3>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className={`text-sm ${isDark ? 'text-dark-400' : 'text-[#94A3B8]'}`}>
                         Enter your credentials to continue
                     </p>
                 </div>
@@ -62,7 +62,7 @@ export default function MockLoginModal({ isOpen, onClose, onLogin, provider }: M
                 {/* Simulated Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-dark-400' : 'text-[#64748B]'}`}>
                             Email or Phone
                         </label>
                         <div className="relative">
@@ -83,7 +83,7 @@ export default function MockLoginModal({ isOpen, onClose, onLogin, provider }: M
                     </div>
 
                     <div>
-                        <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-dark-400' : 'text-[#64748B]'}`}>
                             Password
                         </label>
                         <div className="relative">
@@ -112,7 +112,7 @@ export default function MockLoginModal({ isOpen, onClose, onLogin, provider }: M
                             type="button"
                             onClick={onClose}
                             className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors ${isDark
-                                ? 'bg-dark-800 text-gray-300 hover:bg-dark-700'
+                                ? 'bg-dark-800 text-gray-300 hover:bg-[#334155]'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >

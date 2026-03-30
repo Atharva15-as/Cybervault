@@ -11,9 +11,9 @@ export default function ForgotPassword() {
     const isDark = theme === 'dark';
 
     // Text colors
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
-    const textSubtle = isDark ? 'text-gray-500' : 'text-gray-500';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
+    const textSubtle = isDark ? 'text-[#94A3B8]' : 'text-[#94A3B8]';
 
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);

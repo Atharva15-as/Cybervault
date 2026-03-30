@@ -12,33 +12,35 @@
         @apply scroll-smooth;
     }
 
-    /* Dark Mode (Default) - Light text on dark background */
+    /* Dark Mode (Default) — #0B1220 main BG */
     body {
-        @apply bg-dark-950 text-gray-100 font-sans antialiased;
+        @apply font-sans antialiased;
+        background-color: #0b1220;
+        color: #e2e8f0;
         background-image:
-            radial-gradient(ellipse at top, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
-            radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            radial-gradient(ellipse at top, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(45, 212, 191, 0.06) 0%, transparent 50%);
         background-attachment: fixed;
         min-height: 100vh;
         transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    /* Light Mode - Dark text on cream background */
+    /* Light Mode — soft green-tint BG */
     .light body {
-        @apply text-gray-900;
-        background-color: #F5EFE0;
+        background-color: #F2FAF6;
+        color: #334155;
         background-image:
-            radial-gradient(ellipse at top, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+            radial-gradient(ellipse at top, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(45, 212, 191, 0.03) 0%, transparent 50%);
     }
 
     /* Default paragraph text */
     p {
-        @apply text-gray-300;
+        color: #cbd5e1;
     }
 
     .light p {
-        @apply text-gray-800;
+        color: #334155;
     }
 
     /* Default headings */
@@ -48,7 +50,7 @@
     h4,
     h5,
     h6 {
-        @apply text-white;
+        color: #e2e8f0;
     }
 
     .light h1,
@@ -57,151 +59,198 @@
     .light h4,
     .light h5,
     .light h6 {
-        @apply text-gray-900;
+        color: #0f172a;
     }
 
     /* Links - exclude buttons */
     a:not(.btn-primary):not(.btn-secondary) {
-        @apply text-primary-400 hover:text-primary-300;
+        @apply text-primary-500 hover:text-primary-400;
     }
 
     .light a:not(.btn-primary):not(.btn-secondary) {
-        @apply text-primary-600 hover:text-primary-500;
+        @apply text-primary-600 hover:text-primary-700;
     }
 
     ::selection {
-        @apply bg-primary-500/30 text-white;
+        @apply bg-primary-500/30;
+        color: #e2e8f0;
     }
 
     .light ::selection {
-        @apply bg-primary-500/30 text-gray-900;
+        @apply bg-primary-600/30;
+        color: #0f172a;
     }
 }
 
 /* Custom Component Styles */
 @layer components {
 
-    /* Glass Card Effect - Dark Mode */
+    /* Glass Card — Dark Mode */
     .glass-card {
-        @apply bg-dark-800/80 backdrop-blur-xl rounded-2xl;
-        border: 1.5px solid rgba(6, 182, 212, 0.5);
+        @apply backdrop-blur-xl rounded-2xl;
+        background-color: rgba(30, 41, 59, 0.8);
+        border: 1.5px solid rgba(16, 185, 129, 0.25);
         box-shadow:
             0 4px 30px -4px rgba(0, 0, 0, 0.5),
-            0 0 20px -5px rgba(6, 182, 212, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            0 0 20px -5px rgba(16, 185, 129, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
-    /* Glass Card Effect - Light Mode */
+    /* Glass Card — Light Mode */
     .light .glass-card {
-        @apply bg-white/95 backdrop-blur-xl rounded-2xl;
-        border: 1.5px solid rgba(6, 182, 212, 0.4);
+        @apply backdrop-blur-xl rounded-2xl;
+        background-color: rgba(249, 254, 252, 0.95);
+        border: 1.5px solid rgba(16, 185, 129, 0.2);
         box-shadow:
-            0 4px 24px -4px rgba(0, 0, 0, 0.1),
-            0 0 20px -5px rgba(6, 182, 212, 0.12),
+            0 4px 24px -4px rgba(0, 0, 0, 0.08),
+            0 0 20px -5px rgba(16, 185, 129, 0.08),
             inset 0 1px 0 rgba(255, 255, 255, 0.9);
     }
 
-    /* Gradient Text - Same in both modes */
+    /* Gradient Text */
     .gradient-text {
-        @apply bg-gradient-to-r from-primary-400 via-primary-500 to-blue-500 bg-clip-text text-transparent;
+        @apply bg-gradient-to-r from-primary-400 via-primary-500 bg-clip-text text-transparent;
+        --tw-gradient-to: #2dd4bf;
     }
 
-    /* Primary Button - ALWAYS white text on gradient background */
+    .light .gradient-text {
+        @apply from-primary-600 via-primary-700;
+        --tw-gradient-to: #14b8a6;
+    }
+
+    /* Primary Button — gradient CTA */
     .btn-primary {
-        @apply inline-flex items-center justify-center px-6 py-3 font-semibold bg-gradient-to-r from-primary-500 to-blue-600 rounded-xl hover:from-primary-400 hover:to-blue-500 shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transform hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500/50;
+        @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-xl shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500/50;
+        background: linear-gradient(135deg, #059669, #2dd4bf);
         color: white !important;
+        box-shadow: 0 4px 14px -2px rgba(16, 185, 129, 0.4);
     }
 
-    /* Ensure btn-primary has white text in light mode too */
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #10b981, #5eead4);
+        box-shadow: 0 6px 20px -2px rgba(16, 185, 129, 0.5);
+    }
+
     .light .btn-primary {
         color: white !important;
     }
 
-    /* Secondary Button - Dark Mode (light text) */
+    /* Secondary Button — Dark Mode */
     .btn-secondary {
-        @apply inline-flex items-center justify-center px-6 py-3 font-semibold text-gray-300 border border-dark-600 rounded-xl hover:bg-dark-800 hover:border-dark-500 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-dark-500/50;
+        @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-dark-500/50;
+        color: #cbd5e1;
+        border: 1px solid #334155;
     }
 
-    /* Secondary Button - Light Mode (dark text) */
+    .btn-secondary:hover {
+        background-color: rgba(30, 41, 59, 0.8);
+        border-color: #475569;
+        color: #e2e8f0;
+    }
+
+    /* Secondary Button — Light Mode */
     .light .btn-secondary {
-        @apply text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-gray-400 hover:text-gray-900;
+        color: #334155;
+        border-color: #cbd5e1;
     }
 
-    /* Input Field - Dark Mode (light text) */
+    .light .btn-secondary:hover {
+        background-color: #E4F3EC;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+
+    /* Input Field — Dark Mode */
     .input-field {
-        @apply w-full px-4 py-3 bg-dark-800/80 border border-dark-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-300;
+        @apply w-full px-4 py-3 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500;
+        background-color: rgba(30, 41, 59, 0.8);
+        border: 1px solid #334155;
+        color: #e2e8f0;
     }
 
-    /* Input Field - Light Mode (dark text) */
+    .input-field::placeholder {
+        color: #64748b;
+    }
+
+    /* Input Field — Light Mode */
     .light .input-field {
-        @apply bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-primary-500;
+        background-color: #F9FEFC;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+
+    .light .input-field::placeholder {
+        color: #94a3b8;
+    }
+
+    .light .input-field:focus {
+        border-color: #059669;
     }
 
     /* Card Hover Effect */
     .card-hover {
-        @apply transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30;
+        @apply transition-all duration-300 hover:transform hover:-translate-y-1;
     }
 
-    /* Section Title - Dark Mode (light text) */
+    .card-hover:hover {
+        box-shadow: 0 8px 30px -4px rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    /* Section Title — Dark Mode */
     .section-title {
-        @apply text-3xl md:text-4xl lg:text-5xl font-bold font-heading text-white mb-4;
+        @apply text-3xl md:text-4xl lg:text-5xl font-bold font-heading mb-4;
+        color: #e2e8f0;
     }
 
-    /* Section Title - Light Mode (dark text) */
     .light .section-title {
-        @apply text-gray-900;
+        color: #0f172a;
     }
 
-    /* Section Subtitle - Dark Mode (light muted text) */
+    /* Section Subtitle — Dark Mode */
     .section-subtitle {
-        @apply text-lg text-gray-400 max-w-2xl mx-auto;
+        @apply text-lg max-w-2xl mx-auto;
+        color: #94a3b8;
     }
 
-    /* Section Subtitle - Light Mode (dark muted text) */
     .light .section-subtitle {
-        @apply text-gray-600;
+        color: #64748b;
     }
 
     /* ================================
        THEME TEXT UTILITIES
-       Dark Mode: Light colors
-       Light Mode: Dark colors
        ================================ */
 
-    /* Primary text - main content */
     .text-theme-primary {
-        @apply text-white;
+        color: #e2e8f0;
     }
 
     .light .text-theme-primary {
-        @apply text-gray-900;
+        color: #0f172a;
     }
 
-    /* Secondary text - supporting content */
     .text-theme-secondary {
-        @apply text-gray-300;
+        color: #cbd5e1;
     }
 
     .light .text-theme-secondary {
-        @apply text-gray-700;
+        color: #334155;
     }
 
-    /* Muted text - less important content */
     .text-theme-muted {
-        @apply text-gray-400;
+        color: #94a3b8;
     }
 
     .light .text-theme-muted {
-        @apply text-gray-600;
+        color: #64748b;
     }
 
-    /* Subtle text - hints, placeholders */
     .text-theme-subtle {
-        @apply text-gray-500;
+        color: #64748b;
     }
 
     .light .text-theme-subtle {
-        @apply text-gray-500;
+        color: #94a3b8;
     }
 
     /* ================================
@@ -209,35 +258,35 @@
        ================================ */
 
     .bg-theme-primary {
-        @apply bg-dark-950;
+        background-color: #0b1220;
     }
 
     .light .bg-theme-primary {
-        background-color: #F5EFE0;
+        background-color: #F2FAF6;
     }
 
     .bg-theme-secondary {
-        @apply bg-dark-900;
+        background-color: #0f172a;
     }
 
     .light .bg-theme-secondary {
-        @apply bg-white;
+        background-color: #E4F3EC;
     }
 
     .bg-theme-card {
-        @apply bg-dark-900/60;
+        background-color: rgba(30, 41, 59, 0.6);
     }
 
     .light .bg-theme-card {
-        @apply bg-white/90;
+        background-color: rgba(249, 254, 252, 0.9);
     }
 
     .bg-theme-hover {
-        @apply bg-dark-800;
+        background-color: #1e293b;
     }
 
     .light .bg-theme-hover {
-        @apply bg-gray-100;
+        background-color: #E4F3EC;
     }
 
     /* ================================
@@ -245,19 +294,19 @@
        ================================ */
 
     .border-theme {
-        @apply border-dark-700/50;
+        border-color: rgba(51, 65, 85, 0.5);
     }
 
     .light .border-theme {
-        @apply border-gray-200;
+        border-color: #cbd5e1;
     }
 
     .border-theme-strong {
-        @apply border-dark-600;
+        border-color: #334155;
     }
 
     .light .border-theme-strong {
-        @apply border-gray-300;
+        border-color: #94a3b8;
     }
 
     /* Glow Effect */
@@ -267,7 +316,9 @@
 
     .glow::before {
         content: '';
-        @apply absolute inset-0 rounded-full bg-primary-500/20 blur-xl -z-10;
+        @apply absolute inset-0 rounded-full -z-10;
+        background: rgba(16, 185, 129, 0.2);
+        filter: blur(16px);
     }
 
     /* Animated Border */
@@ -278,7 +329,7 @@
     .animated-border::before {
         content: '';
         @apply absolute inset-0 rounded-2xl;
-        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.3), transparent);
+        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), transparent);
         animation: shimmer 2s infinite;
     }
 
@@ -296,7 +347,6 @@
 /* Custom Utilities */
 @layer utilities {
 
-    /* Hide Scrollbar */
     .hide-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -306,12 +356,10 @@
         display: none;
     }
 
-    /* Text Balance */
     .text-balance {
         text-wrap: balance;
     }
 
-    /* Animation Delays */
     .animation-delay-150 {
         animation-delay: 150ms;
     }
@@ -379,7 +427,6 @@
     padding-bottom: env(safe-area-inset-bottom, 4px);
 }
 
-/* Add padding to body on mobile so content isn't hidden behind bottom nav */
 @media (max-width: 767px) {
     body {
         padding-bottom: 72px;
@@ -405,38 +452,40 @@
     animation: count-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom Scrollbar - Dark Mode */
+/* Custom Scrollbar — Dark Mode */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    @apply bg-dark-900;
+    background-color: #0f172a;
 }
 
 ::-webkit-scrollbar-thumb {
-    @apply bg-dark-600 rounded-full;
+    background-color: #334155;
+    border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    @apply bg-dark-500;
+    background-color: #475569;
 }
 
-/* Custom Scrollbar - Light Mode */
+/* Custom Scrollbar — Light Mode */
 .light ::-webkit-scrollbar-track {
-    background-color: #F5EFE0;
+    background-color: #F2FAF6;
 }
 
 .light ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    background-color: #cbd5e1;
+    border-radius: 9999px;
 }
 
 .light ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+    background-color: #94a3b8;
 }
 
 /* Light mode divider fix */
 .light .divide-dark-700\/50> :not([hidden])~ :not([hidden]) {
-    border-color: rgba(229, 231, 235, 1);
+    border-color: #cbd5e1;
 }

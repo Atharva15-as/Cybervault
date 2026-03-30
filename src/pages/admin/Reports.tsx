@@ -26,8 +26,8 @@ export default function AdminReports() {
         downloads: number;
     } | null>(null);
 
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
 
     // Check if user is admin
     useEffect(() => {
@@ -205,7 +205,7 @@ export default function AdminReports() {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className={`border-b ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
+                                <tr className={`border-b ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}>
                                     <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${textMuted}`}>Sr. No.</th>
                                     <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${textMuted}`}>File Name</th>
                                     <th className={`px-4 py-3 text-left text-xs font-medium uppercase ${textMuted}`}>Size</th>
@@ -226,7 +226,7 @@ export default function AdminReports() {
                                     allFiles.map((file, index) => (
                                         <tr
                                             key={file.id}
-                                            className={`border-b ${isDark ? 'border-dark-700/50' : 'border-gray-100'} hover:bg-primary-500/5`}
+                                            className={`border-b ${isDark ? 'border-dark-700/50' : 'border-[#CBD5E1]'} hover:bg-primary-500/5`}
                                         >
                                             <td className={`px-4 py-3 ${textMuted}`}>{index + 1}</td>
                                             <td className={`px-4 py-3 ${textPrimary} font-medium`}>{file.file_name}</td>

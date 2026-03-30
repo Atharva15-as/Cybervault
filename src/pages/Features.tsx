@@ -1,13 +1,11 @@
 import {
     Shield,
     Lock,
-    Key,
     Clock,
     UserCheck,
     FileCheck,
     ShieldAlert,
     Cloud,
-    Fingerprint,
     X,
     ArrowRight
 } from 'lucide-react';
@@ -87,18 +85,6 @@ const features = [
             'Automatic account lockout after failed login attempts.',
         ]
     },
-    {
-        icon: Fingerprint,
-        title: 'Zero-Knowledge Architecture',
-        description: 'We never see your unencrypted data. Only you hold the keys to your files.',
-        highlight: 'Zero-Knowledge',
-        details: [
-            'Encryption keys are derived from your password client-side.',
-            'Server has no access to your raw password or decryption keys.',
-            'True privacy: we cannot view your files even under subpoena.',
-            'Your data remains yours, mathematically guaranteed.',
-        ]
-    },
 ];
 
 export default function Features() {
@@ -107,10 +93,10 @@ export default function Features() {
     const [selectedFeature, setSelectedFeature] = useState<typeof features[0] | null>(null);
 
     // Text colors
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
-    const textSubtle = isDark ? 'text-gray-500' : 'text-gray-500';
-    const modalBg = isDark ? 'bg-dark-900/95 border-dark-700' : 'bg-white/95 border-gray-200';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
+    const textSubtle = isDark ? 'text-[#94A3B8]' : 'text-[#94A3B8]';
+    const modalBg = isDark ? 'bg-dark-900/95 border-[#334155]' : 'bg-white/95 border-[#CBD5E1]';
 
     return (
         <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8">
@@ -143,7 +129,7 @@ export default function Features() {
                         >
                             {/* Icon */}
                             <div className="flex items-start justify-between mb-4">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500/20 to-blue-500/20 flex items-center justify-center group-hover:from-primary-500/30 group-hover:to-blue-500/30 transition-all">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500/20 to-cyber-500/20 flex items-center justify-center group-hover:from-primary-500/30 group-hover:to-cyber-500/30 transition-all">
                                     <feature.icon className="h-6 w-6 text-primary-500" />
                                 </div>
                                 <span className="px-3 py-1 rounded-full bg-primary-500/10 text-primary-500 text-xs font-medium">
@@ -186,21 +172,7 @@ export default function Features() {
                     </div>
                 </div>
 
-                {/* Bottom CTA */}
-                <div className="mt-16 text-center">
-                    <div className="glass-card inline-block p-8">
-                        <Key className="h-12 w-12 text-primary-500 mx-auto mb-4" />
-                        <h3 className={`text-xl font-semibold mb-3 ${textPrimary}`}>
-                            Ready to experience secure file sharing?
-                        </h3>
-                        <p className={`${textMuted} mb-6`}>
-                            Start protecting your files with CyberVault today.
-                        </p>
-                        <a href="/register" className="btn-primary">
-                            Get Started Free
-                        </a>
-                    </div>
-                </div>
+
             </div>
 
             {/* Feature Modal */}
@@ -214,7 +186,7 @@ export default function Features() {
                         {/* Close Button */}
                         <button
                             onClick={() => setSelectedFeature(null)}
-                            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-gray-900 hover:bg-black/5'}`}
+                            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${isDark ? 'text-dark-400 hover:text-dark-200 hover:bg-white/10' : 'text-gray-500 hover:text-gray-900 hover:bg-black/5'}`}
                         >
                             <X className="h-6 w-6" />
                         </button>
@@ -222,7 +194,7 @@ export default function Features() {
                         <div className="flex flex-col md:flex-row gap-6">
                             {/* Icon Side */}
                             <div className="flex-shrink-0">
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500/20 to-blue-500/20 flex items-center justify-center">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500/20 to-cyber-500/20 flex items-center justify-center">
                                     <selectedFeature.icon className="h-8 w-8 text-primary-500" />
                                 </div>
                             </div>
@@ -242,7 +214,7 @@ export default function Features() {
                                     {selectedFeature.description}
                                 </p>
 
-                                <div className={`space-y-3 p-6 rounded-xl ${isDark ? 'bg-dark-800/50' : 'bg-gray-50'}`}>
+                                <div className={`space-y-3 p-6 rounded-xl ${isDark ? 'bg-dark-800/50' : 'bg-[#E4F3EC]'}`}>
                                     <h4 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${textSubtle}`}>
                                         Key Technical Details
                                     </h4>
@@ -250,7 +222,7 @@ export default function Features() {
                                         {selectedFeature.details.map((detail, idx) => (
                                             <li key={idx} className="flex items-start gap-3">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-2 flex-shrink-0" />
-                                                <span className={`${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{detail}</span>
+                                                <span className={`${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>{detail}</span>
                                             </li>
                                         ))}
                                     </ul>

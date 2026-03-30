@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PageTransition from './components/PageTransition';
 import MobileBottomNav from './components/MobileBottomNav';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
+import ScrollToTop from './components/ScrollToTop';
 import { Loader2 } from 'lucide-react';
 
 // Lazy-loaded pages for code splitting
@@ -16,8 +17,6 @@ const Home = lazy(() => import('./pages/Home'));
 const Features = lazy(() => import('./pages/Features'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const About = lazy(() => import('./pages/About'));
-const Contact = lazy(() => import('./pages/Contact'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
@@ -30,6 +29,9 @@ const FileScanner = lazy(() => import('./scanner/pages/FileScanner'));
 const UrlScanner = lazy(() => import('./scanner/pages/UrlScanner'));
 const ScanHistory = lazy(() => import('./scanner/pages/ScanHistory'));
 const ActivityLog = lazy(() => import('./pages/ActivityLog'));
+const Converter = lazy(() => import('./pages/Converter'));
+const SecureEncrypt = lazy(() => import('./pages/SecureEncrypt'));
+const FileEncryptDecrypt = lazy(() => import('./pages/FileEncryptDecrypt'));
 
 // Loading fallback
 function PageLoader() {
@@ -48,10 +50,14 @@ function PageLoader() {
 // Inner app component that has access to router context
 function AppContent() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { toggleTheme } = useTheme();
+
+    const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname);
 
     return (
         <div className="min-h-screen flex flex-col">
+            <ScrollToTop />
             <Navbar />
             <main className="flex-1">
                 <PageTransition>
@@ -68,8 +74,6 @@ function AppContent() {
                                     </ProtectedRoute>
                                 }
                             />
-                            <Route path="/about" element={<About />} />
-                            <Route path="/contact" element={<Contact />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -111,6 +115,9 @@ function AppContent() {
                             />
                             {/* Scanner Routes - Public */}
                             <Route path="/scanner" element={<ScannerHome />} />
+                            <Route path="/converter" element={<Converter />} />
+                            <Route path="/encrypt" element={<SecureEncrypt />} />
+                            <Route path="/file-encrypt-decrypt" element={<FileEncryptDecrypt />} />
                             <Route path="/scanner/file" element={<FileScanner />} />
                             <Route path="/scanner/url" element={<UrlScanner />} />
                             <Route
@@ -125,7 +132,7 @@ function AppContent() {
                     </Suspense>
                 </PageTransition>
             </main>
-            <Footer />
+            {!isAuthPage && <Footer />}
             <MobileBottomNav />
             <KeyboardShortcuts
                 onNavigate={(path) => navigate(path)}

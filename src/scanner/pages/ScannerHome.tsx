@@ -157,7 +157,7 @@ const capabilities: CapabilityDetail[] = [
             'EternalBlue exploit payload — SMBv1 buffer overflow targeting srv.sys with embedded DoublePulsar backdoor installer',
         ],
         useCases: [
-            'Detecting weaponized documents (Office files with macro-based exploit chains)',
+            'Detecting weaponized Office files (macro-based exploit chains)',
             'Identifying lateral movement tools during incident response investigations',
             'Screening memory dumps and forensic images for injected shellcode or C2 implants',
         ],
@@ -260,8 +260,8 @@ export default function ScannerHome() {
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: '3rem', paddingTop: '2rem' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                        <Shield size={40} style={{ color: 'var(--neon-cyan)', filter: 'drop-shadow(0 0 10px rgba(0,255,245,0.5))' }} />
-                        <h1 className="glitch-text" style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0, background: 'linear-gradient(135deg, #00fff5, #ff00e5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                        <Shield className="h-10 w-10 text-primary-500" />
+                        <h1 className="glitch-text gradient-text" style={{ fontSize: '2.5rem', fontWeight: 800, margin: 0 }}>
                             THREAT SCANNER
                         </h1>
                     </div>
@@ -276,18 +276,18 @@ export default function ScannerHome() {
                     <Link to="/scanner/file" style={{ textDecoration: 'none' }}>
                         <div className="cyber-card" style={{ padding: '2rem', cursor: 'pointer', height: '100%' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,255,245,0.1)', border: '1px solid rgba(0,255,245,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <FileSearch size={24} style={{ color: 'var(--neon-cyan)' }} />
+                                <div className="w-12 h-12 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                                    <FileSearch className="w-6 h-6 text-primary-500" />
                                 </div>
                                 <div>
-                                    <h3 className="neon-cyan" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>File Scanner</h3>
+                                    <h3 className="text-xl font-bold text-primary-500" style={{ margin: 0 }}>File Scanner</h3>
                                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--cyber-muted)' }}>Upload & analyze files</p>
                                 </div>
                                 <ChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--cyber-muted)' }} />
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                                 {['Hash Matching', 'Entropy Analysis', 'PE Analysis', 'Pattern Matching', 'YARA Rules', 'PDF Reports'].map(f => (
-                                    <span key={f} style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: 4, background: 'rgba(0,255,245,0.06)', color: 'var(--neon-cyan)', border: '1px solid rgba(0,255,245,0.15)' }}>{f}</span>
+                                    <span key={f} className="text-[11px] px-2 py-1 rounded-md bg-primary-500/10 text-primary-500 border border-primary-500/20">{f}</span>
                                 ))}
                             </div>
                         </div>
@@ -297,18 +297,18 @@ export default function ScannerHome() {
                     <Link to="/scanner/url" style={{ textDecoration: 'none' }}>
                         <div className="cyber-card" style={{ padding: '2rem', cursor: 'pointer', height: '100%' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(255,0,229,0.1)', border: '1px solid rgba(255,0,229,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Globe size={24} style={{ color: 'var(--neon-magenta)' }} />
+                                <div className="w-12 h-12 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                                    <Globe className="w-6 h-6 text-primary-500" />
                                 </div>
                                 <div>
-                                    <h3 className="neon-magenta" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>URL Scanner</h3>
+                                    <h3 className="text-xl font-bold text-primary-500" style={{ margin: 0 }}>URL Scanner</h3>
                                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--cyber-muted)' }}>Analyze suspicious URLs</p>
                                 </div>
                                 <ChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--cyber-muted)' }} />
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                                 {['72 Engines', 'Domain Check', 'Phishing Detection', 'TLD Analysis', 'Pattern Matching', 'Brand Detection'].map(f => (
-                                    <span key={f} style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: 4, background: 'rgba(255,0,229,0.06)', color: 'var(--neon-magenta)', border: '1px solid rgba(255,0,229,0.15)' }}>{f}</span>
+                                    <span key={f} className="text-[11px] px-2 py-1 rounded-md bg-primary-500/10 text-primary-500 border border-primary-500/20">{f}</span>
                                 ))}
                             </div>
                         </div>
@@ -318,18 +318,18 @@ export default function ScannerHome() {
                     <Link to="/scanner/history" style={{ textDecoration: 'none' }}>
                         <div className="cyber-card" style={{ padding: '2rem', cursor: 'pointer', height: '100%' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(57,255,20,0.1)', border: '1px solid rgba(57,255,20,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <History size={24} style={{ color: 'var(--neon-green)' }} />
+                                <div className="w-12 h-12 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                                    <History className="w-6 h-6 text-primary-500" />
                                 </div>
                                 <div>
-                                    <h3 className="neon-green" style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Scan History</h3>
+                                    <h3 className="text-xl font-bold text-primary-500" style={{ margin: 0 }}>Scan History</h3>
                                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--cyber-muted)' }}>View past results & stats</p>
                                 </div>
                                 <ChevronRight size={20} style={{ marginLeft: 'auto', color: 'var(--cyber-muted)' }} />
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                                 {['SQLite Storage', 'Stats Dashboard', 'Scan Timeline', 'Export Data', 'Threat Trends'].map(f => (
-                                    <span key={f} style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: 4, background: 'rgba(57,255,20,0.06)', color: 'var(--neon-green)', border: '1px solid rgba(57,255,20,0.15)' }}>{f}</span>
+                                    <span key={f} className="text-[11px] px-2 py-1 rounded-md bg-primary-500/10 text-primary-500 border border-primary-500/20">{f}</span>
                                 ))}
                             </div>
                         </div>
@@ -364,7 +364,7 @@ export default function ScannerHome() {
                 )}
 
                 {/* Detection Capabilities Grid - CLICKABLE */}
-                <div style={{ marginTop: '2rem' }}>
+                <div style={{ marginTop: '2rem', display: 'none' }}>
                     <h2 style={{ fontSize: '1.1rem', color: 'var(--cyber-text)', marginBottom: '0.5rem' }}>Detection Capabilities</h2>
                     <p style={{ fontSize: '0.8rem', color: 'var(--cyber-muted)', marginBottom: '1rem' }}>
                         Click on any capability to learn more about how it works

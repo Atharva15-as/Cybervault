@@ -52,9 +52,11 @@ export default function ScanHistory() {
                     <ArrowLeft size={16} /> Back to Scanner
                 </Link>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '2rem' }}>
-                    <History size={28} style={{ color: '#00fff5', filter: 'drop-shadow(0 0 6px rgba(0,255,245,0.5))' }} />
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, color: '#3B82F6' }}>Scan History</h1>
+                <div className="flex items-center gap-3 mb-8">
+                    <History size={28} className="text-primary-500 drop-shadow-lg" />
+                    <h1 className="text-3xl md:text-3xl font-bold font-heading m-0 text-primary-500">
+                        Scan <span className="gradient-text">History</span>
+                    </h1>
                 </div>
 
                 {/* Stats Dashboard */}

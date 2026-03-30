@@ -20,8 +20,10 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { communityService, Community, CommunityMember, CommunityFile } from '../services/communityService';
 import { generateShareToken } from '../utils/crypto';
+import { canShareFile, canDownloadFile, canManageCommunity } from '../services/authorizationService';
 import UploadModal from '../components/UploadModal';
 import ShareModal from '../components/ShareModal';
 
@@ -30,6 +32,7 @@ export default function CommunityVault() {
     const navigate = useNavigate();
     const { theme } = useTheme();
     const { user } = useAuth();
+    const { addToast } = useToast();
     const isDark = theme === 'dark';
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,8 +62,8 @@ export default function CommunityVault() {
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [leaving, setLeaving] = useState(false);
 
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
 
     const loadData = async () => {
         if (!communityId) return;
@@ -181,16 +184,29 @@ export default function CommunityVault() {
     };
 
     const handleShare = (file: CommunityFile) => {
+        const authCheck = canShareFile(user);
+        if (!authCheck.authorized) {
+            addToast({ type: 'error', title: 'Authorization Required', message: authCheck.message });
+            navigate('/login', { state: { action: 'share', fileName: file.file_name } });
+            return;
+        }
         setSelectedFile(file);
         setShowShareModal(true);
+        addToast({ type: 'info', title: 'Share Link', message: `Sharing options for ${file.file_name}` });
     };
 
     const handleDownloadClick = (file: CommunityFile) => {
+        const authCheck = canDownloadFile(user);
+        if (!authCheck.authorized) {
+            addToast({ type: 'error', title: 'Authorization Required', message: authCheck.message });
+            navigate('/login', { state: { action: 'download', fileName: file.file_name } });
+            return;
+        }
         if (file.malicious_score > 30) {
             setFileToDownload(file);
             setShowSecurityWarning(true);
         } else {
-            alert(`Downloading ${file.file_name}...`);
+            addToast({ type: 'success', title: 'Download Started', message: `Downloading ${file.file_name}...` });
         }
     };
 
@@ -203,21 +219,36 @@ export default function CommunityVault() {
     };
 
     const handleDeleteFile = async (fileId: string) => {
+        const authCheck = canManageCommunity(user, community?.creator_id);
+        if (!authCheck.authorized) {
+            addToast({ type: 'error', title: 'Authorization Required', message: authCheck.message });
+            return;
+        }
         if (confirm('Are you sure you want to delete this file?')) {
             const { success } = await communityService.deleteCommunityFile(fileId);
             if (success) {
                 setFiles(prev => prev.filter(f => f.id !== fileId));
+                addToast({ type: 'success', title: 'File Deleted', message: 'File has been removed from the community' });
+            } else {
+                addToast({ type: 'error', title: 'Deletion Failed', message: 'Could not delete the file' });
             }
         }
     };
 
     const handleLeaveCommunity = async () => {
+        if (!user) {
+            addToast({ type: 'error', title: 'Authentication Required', message: 'Please login to leave a community' });
+            return;
+        }
         if (!communityId) return;
         setLeaving(true);
         const { success } = await communityService.leaveCommunity(communityId);
         setLeaving(false);
         if (success) {
+            addToast({ type: 'info', title: 'Left Community', message: 'You have left this community' });
             navigate('/communities');
+        } else {
+            addToast({ type: 'error', title: 'Failed to Leave', message: 'Could not leave the community' });
         }
     };
 
@@ -239,7 +270,7 @@ export default function CommunityVault() {
         }
     };
 
-    const isAdmin = community?.creator_id === (user?.id || 'demo-user');
+    const isAdmin = user ? community?.creator_id === user.id : false;
 
     if (loading) {
         return (
@@ -272,14 +303,14 @@ export default function CommunityVault() {
                     <div>
                         <button
                             onClick={() => navigate('/communities')}
-                            className={`flex items-center gap-2 mb-4 text-sm font-medium transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                            className={`flex items-center gap-2 mb-4 text-sm font-medium transition-colors ${isDark ? 'text-dark-400 hover:text-dark-200' : 'text-gray-600 hover:text-gray-900'
                                 }`}
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Communities
                         </button>
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/25">
                                 <FolderLock className="h-7 w-7 text-white" />
                             </div>
                             <div>
@@ -335,7 +366,7 @@ export default function CommunityVault() {
                         {members.map((member) => (
                             <div
                                 key={member.id}
-                                className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 ${isDark ? 'bg-dark-700' : 'bg-gray-100'
+                                className={`px-3 py-1.5 rounded-full text-sm flex items-center gap-2 ${isDark ? 'bg-dark-700' : 'bg-[#E4F3EC]'
                                     }`}
                             >
                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${member.role === 'admin'
@@ -427,7 +458,7 @@ export default function CommunityVault() {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className={`border-b ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
+                                <tr className={`border-b ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}>
                                     <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>
                                         File Name
                                     </th>
@@ -447,7 +478,7 @@ export default function CommunityVault() {
                             </thead>
                             <tbody className={`divide-y ${isDark ? 'divide-dark-700' : 'divide-gray-200'}`}>
                                 {filteredFiles.map((file) => (
-                                    <tr key={file.id} className={`transition-colors ${isDark ? 'hover:bg-dark-800/50' : 'hover:bg-gray-50'}`}>
+                                    <tr key={file.id} className={`transition-colors ${isDark ? 'hover:bg-dark-800/50' : 'hover:bg-[#E4F3EC]'}`}>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
@@ -488,8 +519,8 @@ export default function CommunityVault() {
                                                 <button
                                                     onClick={() => handleShare(file)}
                                                     className={`p-2 rounded-lg transition-colors ${isDark
-                                                        ? 'text-gray-400 hover:text-primary-400 hover:bg-dark-700'
-                                                        : 'text-gray-400 hover:text-primary-600 hover:bg-gray-100'
+                                                        ? 'text-gray-400 hover:text-primary-400 hover:bg-[#334155]'
+                                                        : 'text-gray-400 hover:text-primary-600 hover:bg-[#E4F3EC]'
                                                         }`}
                                                     title="Share"
                                                 >
@@ -498,8 +529,8 @@ export default function CommunityVault() {
                                                 <button
                                                     onClick={() => handleDownloadClick(file)}
                                                     className={`p-2 rounded-lg transition-colors ${isDark
-                                                        ? 'text-gray-400 hover:text-white hover:bg-dark-700'
-                                                        : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                                                        ? 'text-dark-400 hover:text-dark-200 hover:bg-[#334155]'
+                                                        : 'text-gray-400 hover:text-gray-900 hover:bg-[#E4F3EC]'
                                                         }`}
                                                     title="Download"
                                                 >
@@ -509,8 +540,8 @@ export default function CommunityVault() {
                                                     <button
                                                         onClick={() => handleDeleteFile(file.id)}
                                                         className={`p-2 rounded-lg transition-colors ${isDark
-                                                            ? 'text-gray-400 hover:text-red-400 hover:bg-dark-700'
-                                                            : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+                                                            ? 'text-gray-400 hover:text-red-400 hover:bg-[#334155]'
+                                                            : 'text-gray-400 hover:text-red-500 hover:bg-[#E4F3EC]'
                                                             }`}
                                                         title="Delete"
                                                     >
@@ -529,7 +560,7 @@ export default function CommunityVault() {
                         <div className="text-center py-12">
                             <Shield className={`h-12 w-12 mx-auto mb-4 ${textMuted}`} />
                             <p className={textMuted}>No files in this vault yet</p>
-                            <p className={`text-sm ${textMuted}`}>Upload your first file to get started</p>
+                            <p className={`text-sm ${textMuted}`}>Upload your first file</p>
                         </div>
                     )}
                 </div>
@@ -537,7 +568,7 @@ export default function CommunityVault() {
                 {/* Leave Confirmation Modal */}
                 {showLeaveConfirm && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                        <div className={`p-6 max-w-sm w-full animate-slide-up rounded-2xl shadow-2xl border ${isDark ? 'bg-dark-900 border-dark-700' : 'bg-white border-gray-200'
+                        <div className={`p-6 max-w-sm w-full animate-slide-up rounded-2xl shadow-2xl border ${isDark ? 'bg-dark-900 border-[#334155]' : 'bg-[#F9FEFC] border-[#CBD5E1]'
                             }`}>
                             <div className="text-center mb-6">
                                 <div className="w-14 h-14 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
@@ -570,7 +601,7 @@ export default function CommunityVault() {
                 {/* Security Warning Modal */}
                 {showSecurityWarning && fileToDownload && (
                     <div className="fixed inset-0 bg-red-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                        <div className={`p-6 max-w-md w-full animate-slide-up rounded-2xl shadow-2xl border-2 border-red-500/50 ${isDark ? 'bg-dark-900' : 'bg-white'
+                        <div className={`p-6 max-w-md w-full animate-slide-up rounded-2xl shadow-2xl border-2 border-red-500/50 ${isDark ? 'bg-[#0F172A]' : 'bg-[#F9FEFC]'
                             }`}>
                             <div className="flex flex-col items-center text-center mb-6">
                                 <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4 animate-pulse">

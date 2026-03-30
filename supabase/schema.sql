@@ -1,14 +1,16 @@
 -- Run this SQL in your Supabase SQL Editor to create the shared_files table
 -- Go to: Supabase Dashboard > SQL Editor > New Query
 
--- Create the shared_files table
+-- Create the shared_files table with enhanced encryption support
 CREATE TABLE IF NOT EXISTS shared_files (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     file_name VARCHAR(255) NOT NULL,
     file_size VARCHAR(50) NOT NULL,
-    file_hash VARCHAR(64) NOT NULL,  -- SHA-256 hash (64 characters)
+    file_hash VARCHAR(64) NOT NULL,  -- SHA-256 hash of original file (64 characters)
+    encrypted_hash VARCHAR(64) NOT NULL,       -- SHA-256 hash of encrypted blob for tamper detection
     pin_hash VARCHAR(64) NOT NULL,   -- Hashed PIN for security
+    storage_path TEXT NOT NULL,                -- Path in Supabase Storage bucket
     share_token VARCHAR(32) UNIQUE NOT NULL,  -- Unique share token for URL
     share_url TEXT NOT NULL,          -- Full shareable URL
     expiry_date TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -16,7 +18,11 @@ CREATE TABLE IF NOT EXISTS shared_files (
     malicious_score INTEGER DEFAULT 0,
     security_status VARCHAR(20) DEFAULT 'safe',  -- 'safe', 'warning', 'danger'
     download_count INTEGER DEFAULT 0,
+    max_downloads INTEGER DEFAULT 0,     -- 0 = unlimited
+    link_password_hash VARCHAR(128),      -- Optional additional link password hash
     is_active BOOLEAN DEFAULT true,
+    last_accessed TIMESTAMP WITH TIME ZONE,
+    encrypted_metadata TEXT,              -- Encrypted file metadata (name, size, type)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -25,6 +31,7 @@ CREATE TABLE IF NOT EXISTS shared_files (
 CREATE INDEX IF NOT EXISTS idx_shared_files_share_token ON shared_files(share_token);
 CREATE INDEX IF NOT EXISTS idx_shared_files_user_id ON shared_files(user_id);
 CREATE INDEX IF NOT EXISTS idx_shared_files_expiry ON shared_files(expiry_date);
+CREATE INDEX IF NOT EXISTS idx_shared_files_encrypted_hash ON shared_files(encrypted_hash);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE shared_files ENABLE ROW LEVEL SECURITY;
@@ -74,3 +81,30 @@ SELECT
     SUM(download_count) as total_downloads
 FROM shared_files
 GROUP BY user_id;
+
+-- ==========================================================================
+-- EMAIL SHARES TABLE — For tracking email-based sharing invitations
+-- ==========================================================================
+CREATE TABLE IF NOT EXISTS shared_file_emails (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    shared_file_id UUID REFERENCES shared_files(id) ON DELETE CASCADE,
+    recipient_email VARCHAR(255) NOT NULL,
+    access_role VARCHAR(20) DEFAULT 'viewer',  -- 'viewer' or 'editor'
+    is_revoked BOOLEAN DEFAULT false,
+    sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_accessed TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_shared_file_emails_file ON shared_file_emails(shared_file_id);
+
+-- RLS for email shares
+ALTER TABLE shared_file_emails ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage email shares for own files" ON shared_file_emails
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM shared_files 
+            WHERE shared_files.id = shared_file_emails.shared_file_id 
+            AND shared_files.user_id = auth.uid()
+        )
+    );

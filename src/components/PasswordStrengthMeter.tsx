@@ -36,7 +36,7 @@ const colorMap: Record<string, { bar: string; text: string; bg: string }> = {
     red: { bar: 'bg-red-500', text: 'text-red-500', bg: 'bg-red-500/10' },
     orange: { bar: 'bg-orange-500', text: 'text-orange-500', bg: 'bg-orange-500/10' },
     yellow: { bar: 'bg-yellow-500', text: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-    blue: { bar: 'bg-blue-500', text: 'text-blue-500', bg: 'bg-blue-500/10' },
+    blue: { bar: 'bg-primary-500', text: 'text-primary-500', bg: 'bg-primary-500/10' },
     green: { bar: 'bg-green-500', text: 'text-green-500', bg: 'bg-green-500/10' },
 };
 
@@ -74,7 +74,7 @@ export default function PasswordStrengthMeter({ password }: PasswordStrengthMete
                     </span>
                 </div>
                 {strength.score < 3 && (
-                    <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <span className={`text-[10px] ${isDark ? 'text-[#94A3B8]' : 'text-dark-400'}`}>
                         {strength.score < 2 ? 'Add numbers & symbols' : 'Almost there!'}
                     </span>
                 )}

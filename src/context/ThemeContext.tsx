@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useLayoutEffect, ReactNode } from 'react';
+import { createContext, useContext, useLayoutEffect, ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -10,54 +10,30 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Get initial theme from localStorage or system preference
-function getInitialTheme(): Theme {
-    if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('theme') as Theme;
-        if (stored === 'light' || stored === 'dark') {
-            return stored;
-        }
-        // Check system preference
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return 'dark';
-        }
-    }
-    return 'dark'; // Default to dark mode
-}
-
 // Apply theme to DOM immediately (prevents flash)
-function applyTheme(theme: Theme) {
+function applyTheme() {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
+    root.classList.remove('light');
+    root.classList.add('dark');
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>(getInitialTheme);
-
     // Use useLayoutEffect to apply theme before paint
     useLayoutEffect(() => {
-        applyTheme(theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    // Also sync on mount in case of hydration mismatch
-    useLayoutEffect(() => {
-        const currentTheme = getInitialTheme();
-        applyTheme(currentTheme);
-        setThemeState(currentTheme);
+        applyTheme();
+        localStorage.setItem('theme', 'dark');
     }, []);
 
     const toggleTheme = () => {
-        setThemeState(prev => prev === 'dark' ? 'light' : 'dark');
+        // No-op, we only support dark mode
     };
 
-    const setTheme = (newTheme: Theme) => {
-        setThemeState(newTheme);
+    const setTheme = (_newTheme: Theme) => {
+        // No-op
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider value={{ theme: 'dark', toggleTheme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     );

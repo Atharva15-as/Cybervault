@@ -9,10 +9,6 @@ const footerLinks = {
         { name: 'How It Works', path: '/how-it-works' },
         { name: 'Dashboard', path: '/dashboard' },
     ],
-    company: [
-        { name: 'About', path: '/about' },
-        { name: 'Contact', path: '/contact' },
-    ],
     legal: [
         { name: 'Privacy Policy', path: '/privacy' },
         { name: 'Terms & Conditions', path: '/terms' },
@@ -31,21 +27,21 @@ export default function Footer() {
     const isDark = theme === 'dark';
 
     // Text colors: Dark mode = light text, Light mode = dark text
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
-    const textSubtle = isDark ? 'text-gray-500' : 'text-gray-500';
+    const textPrimary = isDark ? 'text-dark-200' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
+    const textSubtle = isDark ? 'text-dark-500' : 'text-[#94A3B8]';
 
     return (
         <footer className={`pt-16 pb-8 border-t transition-colors duration-300 ${isDark
-            ? 'bg-dark-950 border-dark-800/50'
-            : 'bg-white border-gray-200'
+            ? 'bg-[#0b1220] border-[#334155]/50'
+            : 'bg-[#F2FAF6] border-[#CBD5E1]'
             }`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
                     {/* Brand */}
                     <div className="lg:col-span-2">
                         <Link to="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                                 <Logo className="w-6 h-6" shieldClassName="text-white" lockClassName="text-white/90" />
                             </div>
                             <span className="text-xl font-bold font-heading">
@@ -64,8 +60,8 @@ export default function Footer() {
                                     href={social.href}
                                     aria-label={social.label}
                                     className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${isDark
-                                        ? 'bg-dark-800 text-gray-400 hover:text-primary-400 hover:bg-dark-700'
-                                        : 'bg-gray-100 text-gray-500 hover:text-primary-500 hover:bg-gray-200'
+                                        ? 'bg-[#1E293B] text-dark-400 hover:text-primary-400 hover:bg-[#334155]'
+                                        : 'bg-[#E4F3EC] text-[#64748B] hover:text-primary-600 hover:bg-[#d0eadd]'
                                         }`}
                                 >
                                     <social.icon className="h-5 w-5" />
@@ -79,23 +75,6 @@ export default function Footer() {
                         <h4 className={`font-semibold mb-4 ${textPrimary}`}>Product</h4>
                         <ul className="space-y-3">
                             {footerLinks.product.map((link) => (
-                                <li key={link.path}>
-                                    <Link
-                                        to={link.path}
-                                        className={`hover:text-primary-500 transition-colors ${textMuted}`}
-                                    >
-                                        {link.name}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Company Links */}
-                    <div>
-                        <h4 className={`font-semibold mb-4 ${textPrimary}`}>Company</h4>
-                        <ul className="space-y-3">
-                            {footerLinks.company.map((link) => (
                                 <li key={link.path}>
                                     <Link
                                         to={link.path}
@@ -127,7 +106,7 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className={`pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 ${isDark ? 'border-dark-800/50' : 'border-gray-200'
+                <div className={`pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4 ${isDark ? 'border-[#334155]/50' : 'border-[#CBD5E1]'
                     }`}>
                     <p className={`text-sm ${textSubtle}`}>
                         © {new Date().getFullYear()} CyberVault. All rights reserved.

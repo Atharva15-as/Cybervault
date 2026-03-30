@@ -55,7 +55,7 @@ export function calculateEntropy(data: ArrayBuffer): EntropyResult {
         assessment = 'packed';
         description = 'Moderately high entropy. Could indicate packing or obfuscation.';
     } else {
-        description = 'Normal entropy range for standard executables and documents.';
+        description = 'Normal entropy range for standard executables and common files.';
     }
 
     return { value: Math.round(entropy * 1000) / 1000, assessment, description };

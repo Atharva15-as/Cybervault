@@ -93,19 +93,19 @@ export default function KeyboardShortcuts({ onNavigate, onToggleTheme }: Keyboar
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[90] p-4 animate-fade-in" onClick={() => setIsOpen(false)}>
             <div
-                className={`w-full max-w-lg rounded-2xl shadow-2xl border animate-slide-up overflow-hidden ${isDark ? 'bg-dark-900 border-dark-700' : 'bg-white border-gray-200'
+                className={`w-full max-w-lg rounded-2xl shadow-2xl border animate-slide-up overflow-hidden ${isDark ? 'bg-dark-900 border-[#334155]' : 'bg-[#F9FEFC] border-[#CBD5E1]'
                     }`}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
+                <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
                             <Keyboard className="h-5 w-5 text-primary-500" />
                         </div>
                         <div>
-                            <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Keyboard Shortcuts</h2>
-                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Navigate faster with hotkeys</p>
+                            <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>Keyboard Shortcuts</h2>
+                            <p className={`text-xs ${isDark ? 'text-dark-400' : 'text-[#94A3B8]'}`}>Navigate faster with hotkeys</p>
                         </div>
                     </div>
                     <button
@@ -121,12 +121,12 @@ export default function KeyboardShortcuts({ onNavigate, onToggleTheme }: Keyboar
                     {shortcuts.map((shortcut, index) => (
                         <div
                             key={index}
-                            className={`flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${isDark ? 'hover:bg-dark-800/50' : 'hover:bg-gray-50'
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${isDark ? 'hover:bg-dark-800/50' : 'hover:bg-[#E4F3EC]'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
-                                <shortcut.icon className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                                <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                <shortcut.icon className={`h-4 w-4 ${isDark ? 'text-dark-400' : 'text-[#94A3B8]'}`} />
+                                <span className={`text-sm ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                                     {shortcut.description}
                                 </span>
                             </div>
@@ -140,7 +140,7 @@ export default function KeyboardShortcuts({ onNavigate, onToggleTheme }: Keyboar
                                             {key}
                                         </kbd>
                                         {i < shortcut.keys.length - 1 && (
-                                            <span className={`mx-1 text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>+</span>
+                                            <span className={`mx-1 text-xs ${isDark ? 'text-[#64748B]' : 'text-dark-400'}`}>+</span>
                                         )}
                                     </span>
                                 ))}
@@ -150,9 +150,9 @@ export default function KeyboardShortcuts({ onNavigate, onToggleTheme }: Keyboar
                 </div>
 
                 {/* Footer */}
-                <div className={`px-6 py-3 border-t text-center ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
-                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                        Press <kbd className={`px-1.5 py-0.5 rounded text-xs border ${isDark ? 'bg-dark-700 border-dark-600' : 'bg-gray-100 border-gray-300'}`}>?</kbd> anywhere to toggle this panel
+                <div className={`px-6 py-3 border-t text-center ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}>
+                    <p className={`text-xs ${isDark ? 'text-[#94A3B8]' : 'text-dark-400'}`}>
+                        Press <kbd className={`px-1.5 py-0.5 rounded text-xs border ${isDark ? 'bg-dark-700 border-[#334155]' : 'bg-gray-100 border-gray-300'}`}>?</kbd> anywhere to toggle this panel
                     </p>
                 </div>
             </div>

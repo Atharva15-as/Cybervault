@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Secure File Storage System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🔐</span>
+                <h1>Secure File Storage</h1>
+                <p>End-to-end encrypted file storage with AES-256</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Two Column Layout -->
+            <div class="content-wrapper">
+                <!-- Left Column: Upload -->
+                <section class="upload-section">
+                    <h2>📤 Upload & Encrypt</h2>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <p class="upload-text">Drag and drop your file here</p>
+                        <p class="upload-subtext">or click to browse</p>
+                        <input 
+                            type="file" 
+                            id="fileInput" 
+                            class="file-input"
+                            accept="*/*"
+                        >
+                    </div>
+
+                    <div id="fileInfo" class="file-info" style="display: none;">
+                        <div class="file-details">
+                            <span class="file-name" id="fileName"></span>
+                            <span class="file-size" id="fileSize"></span>
+                        </div>
+                        <button id="clearFileBtn" class="btn btn-secondary">Clear</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="encryptPassword">
+                            🔑 Encryption Password <span class="required">*</span>
+                        </label>
+                        <div class="password-input-wrapper">
+                            <input 
+                                type="password" 
+                                id="encryptPassword" 
+                                class="input" 
+                                placeholder="Enter at least 6 characters"
+                                minlength="6"
+                                maxlength="128"
+                            >
+                            <button 
+                                type="button" 
+                                id="togglePassword" 
+                                class="toggle-btn"
+                                title="Show/Hide"
+                            >👁️</button>
+                        </div>
+                        <p class="password-hint">
+                            ✓ Use a strong password you'll remember
+                            <br>
+                            ✓ Store it securely - if you forget it, files cannot be recovered
+                        </p>
+                    </div>
+
+                    <div class="password-strength" id="passwordStrength" style="display: none;">
+                        <div class="strength-meter">
+                            <div class="strength-bar" id="strengthBar"></div>
+                        </div>
+                        <p class="strength-text" id="strengthText"></p>
+                    </div>
+
+                    <button id="uploadBtn" class="btn btn-primary" disabled>
+                        🔒 Encrypt & Upload
+                    </button>
+
+                    <div id="uploadProgress" class="progress-container" style="display: none;">
+                        <div class="progress-bar" id="progressBar"></div>
+                        <p class="progress-text" id="progressText">Uploading and encrypting...</p>
+                    </div>
+
+                    <div id="uploadMessage" class="message" style="display: none;"></div>
+                </section>
+
+                <!-- Right Column: Files List -->
+                <section class="files-section">
+                    <h2>📋 Uploaded Files</h2>
+                    
+                    <button id="refreshBtn" class="btn btn-secondary" style="width: 100%; margin-bottom: 15px;">
+                        🔄 Refresh List
+                    </button>
+
+                    <div id="filesList" class="files-list">
+                        <p class="empty-state">Loading files...</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Decryption Modal -->
+        <div id="decryptModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <button class="modal-close" id="closeModal">&times;</button>
+                
+                <h2>🔓 Decrypt File</h2>
+                
+                <div class="modal-file-info">
+                    <p><strong>File:</strong> <span id="modalFilename"></span></p>
+                    <p><strong>Size:</strong> <span id="modalFileSize"></span> bytes</p>
+                    <p><strong>Uploaded:</strong> <span id="modalUploadDate"></span></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="decryptPassword">
+                        🔑 Enter Password <span class="required">*</span>
+                    </label>
+                    <div class="password-input-wrapper">
+                        <input 
+                            type="password" 
+                            id="decryptPassword" 
+                            class="input"
+                            placeholder="Enter the encryption password"
+                            maxlength="128"
+                        >
+                        <button 
+                            type="button" 
+                            id="toggleDecryptPassword" 
+                            class="toggle-btn"
+                            title="Show/Hide"
+                        >👁️</button>
+                    </div>
+                </div>
+
+                <div id="decryptMessage" class="message" style="display: none;"></div>
+
+                <div id="decryptProgress" class="progress-container" style="display: none;">
+                    <div class="progress-bar" id="decryptProgressBar"></div>
+                    <p class="progress-text" id="decryptProgressText">Decrypting...</p>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                    <button id="decryptBtn" class="btn btn-primary">🔓 Decrypt & Download</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                🔐 Secure encryption using AES-256-GCM with PBKDF2 key derivation
+                <br>
+                Your passwords are never stored. Only encrypted files are kept on the server.
+            </p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

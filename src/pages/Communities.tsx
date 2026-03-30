@@ -88,19 +88,19 @@ function CreateCommunityModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className={`p-6 max-w-md w-full animate-slide-up rounded-2xl shadow-2xl border ${isDark ? 'bg-dark-900 border-dark-700' : 'bg-white border-gray-200'
+            <div className={`p-6 max-w-md w-full animate-slide-up rounded-2xl shadow-2xl border ${isDark ? 'bg-dark-900 border-[#334155]' : 'bg-[#F9FEFC] border-[#CBD5E1]'
                 }`}>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                             <Users className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>
                                 Create Community
                             </h3>
-                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <p className={`text-sm ${isDark ? 'text-dark-400' : 'text-[#64748B]'}`}>
                                 Set up a secure vault for your group
                             </p>
                         </div>
@@ -118,7 +118,7 @@ function CreateCommunityModal({
                 <div className="space-y-4">
                     {/* Name */}
                     <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                             Community Name *
                         </label>
                         <input
@@ -133,7 +133,7 @@ function CreateCommunityModal({
 
                     {/* Description */}
                     <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                             Description
                         </label>
                         <textarea
@@ -147,7 +147,7 @@ function CreateCommunityModal({
 
                     {/* Max Members */}
                     <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                             Maximum Members
                         </label>
                         <select
@@ -165,7 +165,7 @@ function CreateCommunityModal({
 
                     {/* Password */}
                     <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                             Access Password *
                         </label>
                         <div className="relative">
@@ -179,7 +179,7 @@ function CreateCommunityModal({
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-400' : 'text-gray-500'
+                                className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-dark-400' : 'text-[#94A3B8]'
                                     }`}
                             >
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -189,7 +189,7 @@ function CreateCommunityModal({
 
                     {/* Confirm Password */}
                     <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                             Confirm Password *
                         </label>
                         <input
@@ -301,7 +301,7 @@ function JoinCommunityModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className={`p-6 max-w-md w-full animate-slide-up rounded-2xl shadow-2xl border ${isDark ? 'bg-dark-900 border-dark-700' : 'bg-white border-gray-200'
+            <div className={`p-6 max-w-md w-full animate-slide-up rounded-2xl shadow-2xl border ${isDark ? 'bg-dark-900 border-[#334155]' : 'bg-[#F9FEFC] border-[#CBD5E1]'
                 }`}>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -310,10 +310,10 @@ function JoinCommunityModal({
                             <UserPlus className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[#0F172A]'}`}>
                                 Join Community
                             </h3>
-                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <p className={`text-sm ${isDark ? 'text-dark-400' : 'text-[#64748B]'}`}>
                                 {community.name}
                             </p>
                         </div>
@@ -328,12 +328,12 @@ function JoinCommunityModal({
                 </div>
 
                 {/* Community Info */}
-                <div className={`p-4 rounded-xl mb-4 ${isDark ? 'bg-dark-800' : 'bg-gray-50'
+                <div className={`p-4 rounded-xl mb-4 ${isDark ? 'bg-[#1E293B]' : 'bg-[#E4F3EC]'
                     }`}>
-                    <p className={`text-sm mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <p className={`text-sm mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                         {community.description || 'No description provided'}
                     </p>
-                    <div className={`flex items-center gap-4 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    <div className={`flex items-center gap-4 text-xs ${isDark ? 'text-[#94A3B8]' : 'text-[#94A3B8]'}`}>
                         <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
                             {community.member_count}/{community.max_members} members
@@ -349,7 +349,7 @@ function JoinCommunityModal({
                 <div className="space-y-4">
                     {/* Password */}
                     <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                             Community Password
                         </label>
                         <div className="relative">
@@ -364,7 +364,7 @@ function JoinCommunityModal({
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-400' : 'text-gray-500'
+                                className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-dark-400' : 'text-[#94A3B8]'
                                     }`}
                             >
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -426,8 +426,8 @@ export default function Communities() {
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
 
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
 
     const loadCommunities = async () => {
         setLoading(true);
@@ -465,7 +465,7 @@ export default function Communities() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                                 <Users className="h-5 w-5 text-white" />
                             </div>
                             <h1 className={`text-2xl font-bold ${textPrimary}`}>Communities</h1>
@@ -488,7 +488,7 @@ export default function Communities() {
                         className={`px-4 py-2 rounded-xl font-medium transition-all ${activeTab === 'my'
                             ? 'bg-primary-500 text-white'
                             : isDark
-                                ? 'bg-dark-800 text-gray-400 hover:text-white'
+                                ? 'bg-dark-800 text-dark-400 hover:text-dark-200'
                                 : 'bg-gray-100 text-gray-600 hover:text-gray-900'
                             }`}
                     >
@@ -499,7 +499,7 @@ export default function Communities() {
                         className={`px-4 py-2 rounded-xl font-medium transition-all ${activeTab === 'browse'
                             ? 'bg-primary-500 text-white'
                             : isDark
-                                ? 'bg-dark-800 text-gray-400 hover:text-white'
+                                ? 'bg-dark-800 text-dark-400 hover:text-dark-200'
                                 : 'bg-gray-100 text-gray-600 hover:text-gray-900'
                             }`}
                     >
@@ -537,7 +537,7 @@ export default function Communities() {
                                             className="glass-card p-5 cursor-pointer card-hover group"
                                         >
                                             <div className="flex items-start justify-between mb-4">
-                                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center">
+                                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                                                     <FolderLock className="h-6 w-6 text-white" />
                                                 </div>
                                                 <ChevronRight className={`h-5 w-5 transition-transform group-hover:translate-x-1 ${textMuted}`} />

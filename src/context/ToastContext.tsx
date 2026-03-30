@@ -46,10 +46,10 @@ const toastColors = {
         bar: 'bg-yellow-500',
     },
     info: {
-        dark: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+        dark: 'bg-primary-500/10 border-primary-500/30 text-primary-400',
         light: 'bg-blue-50 border-blue-200 text-blue-700',
-        icon: 'text-blue-500',
-        bar: 'bg-blue-500',
+        icon: 'text-primary-500',
+        bar: 'bg-primary-500',
     },
 };
 

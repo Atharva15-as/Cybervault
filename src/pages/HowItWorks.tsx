@@ -92,9 +92,9 @@ export default function HowItWorks() {
     const isDark = theme === 'dark';
 
     // Text colors
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
-    const textSubtle = isDark ? 'text-gray-500' : 'text-gray-500';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
+    const textSubtle = isDark ? 'text-[#94A3B8]' : 'text-[#94A3B8]';
 
     return (
         <div className="pt-28 pb-20 px-4 sm:px-6 lg:px-8">
@@ -128,13 +128,13 @@ export default function HowItWorks() {
                             ].map((item, index, arr) => (
                                 <div key={item.label} className="flex items-center gap-4">
                                     <div className="flex flex-col items-center gap-2">
-                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500/20 to-blue-500/20 flex items-center justify-center">
+                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500/20 to-cyber-500/20 flex items-center justify-center">
                                             <item.icon className="h-7 w-7 text-primary-500" />
                                         </div>
                                         <span className={`text-sm ${textSubtle}`}>{item.label}</span>
                                     </div>
                                     {index < arr.length - 1 && (
-                                        <div className="hidden sm:block w-12 h-0.5 bg-gradient-to-r from-primary-500/50 to-blue-500/50" />
+                                        <div className="hidden sm:block w-12 h-0.5 bg-gradient-to-r from-primary-500/50 to-cyber-500/50" />
                                     )}
                                 </div>
                             ))}
@@ -145,7 +145,7 @@ export default function HowItWorks() {
                 {/* Steps Timeline */}
                 <div className="relative">
                     {/* Vertical Line */}
-                    <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-blue-500 to-primary-500 hidden md:block" />
+                    <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-cyber-500 to-primary-500 hidden md:block" />
 
                     <div className="space-y-12">
                         {steps.map((step, index) => (
@@ -158,7 +158,7 @@ export default function HowItWorks() {
                                         {/* Step Number & Icon */}
                                         <div className="flex items-center gap-4 md:flex-col md:items-center md:min-w-[80px]">
                                             <span className="text-4xl font-bold text-primary-500/30 font-heading">{step.number}</span>
-                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500/20 to-blue-500/20 flex items-center justify-center">
+                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500/20 to-cyber-500/20 flex items-center justify-center">
                                                 <step.icon className="h-7 w-7 text-primary-500" />
                                             </div>
                                         </div>

@@ -1,20 +1,24 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, FileIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import Logo from '../../components/Logo';
+import { useToast } from '../../context/ToastContext';
 
 export default function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const state = location.state as { action?: string, fileName?: string, from?: any } | null;
+
     const { signIn, signInWithGoogle, signInWithGitHub } = useAuth();
     const { theme } = useTheme();
+    const { addToast } = useToast();
     const isDark = theme === 'dark';
 
     // Text colors: Dark mode = light text, Light mode = dark text
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
-    const textSubtle = isDark ? 'text-gray-500' : 'text-gray-500';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
+    const textSubtle = isDark ? 'text-[#94A3B8]' : 'text-[#94A3B8]';
 
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -38,59 +42,148 @@ export default function Login() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
         setError(null);
 
-        const { error } = await signIn(formData.email, formData.password);
+        // --- Input Validation ---
+        // Check if fields are empty
+        if (!formData.email.trim()) {
+            setError('Email address is required');
+            return;
+        }
 
-        if (error) {
-            setError(error.message);
+        if (!formData.password) {
+            setError('Password is required');
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            setError('Please enter a valid email address');
+            return;
+        }
+
+        // Check password length
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters long');
+            return;
+        }
+
+        // --- Authentication Process ---
+        setIsLoading(true);
+
+        try {
+            // Attempt login
+            const { error: authError } = await signIn(formData.email, formData.password, formData.rememberMe);
+
+            if (authError) {
+                // Handle specific auth errors
+                if (authError.message.includes('Invalid login credentials')) {
+                    setError('Invalid email or password. Please try again.');
+                    addToast({ type: 'error', title: 'Login Failed', message: 'Invalid credentials' });
+                } else if (authError.message.includes('Email not confirmed')) {
+                    setError('Please verify your email address before logging in.');
+                    addToast({ type: 'error', title: 'Email Not Verified', message: 'Check your inbox for verification link' });
+                } else if (authError.message.includes('User not found')) {
+                    setError('No account found with this email. Please sign up first.');
+                    addToast({ type: 'error', title: 'Account Not Found', message: 'Create a new account to continue' });
+                } else if (authError.message.includes('Too many login requests')) {
+                    setError('Too many login attempts. Please wait a moment and try again.');
+                    addToast({ type: 'error', title: 'Rate Limited', message: 'Please wait before trying again' });
+                } else {
+                    setError(authError.message || 'Login failed. Please try again.');
+                    addToast({ type: 'error', title: 'Authentication Error', message: authError.message });
+                }
+                setIsLoading(false);
+                return;
+            }
+
+            addToast({ type: 'success', title: 'Welcome!', message: `Logged in as ${formData.email}` });
+
+            // If user came from upload flow, take them directly to encrypt/upload page
+            const redirectPath =
+                state?.from?.pathname ||
+                (state?.action === 'upload' ? '/file-encrypt-decrypt' : '/dashboard');
+
+            setTimeout(() => {
+                navigate(redirectPath);
+            }, 500);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+            setError(errorMessage);
+            addToast({ type: 'error', title: 'Error', message: errorMessage });
+        } finally {
             setIsLoading(false);
-        } else {
-            navigate('/dashboard');
         }
     };
 
     const handleGoogleLogin = async () => {
         setSocialLoading('google');
-        await signInWithGoogle();
+        await signInWithGoogle(formData.rememberMe);
         // Supabase handles redirect, no need to navigate manually unless it's a popup flow (which it isn't by default here)
     };
 
     const handleGitHubLogin = async () => {
         setSocialLoading('github');
-        await signInWithGitHub();
+        await signInWithGitHub(formData.rememberMe);
     };
 
     return (
-        <div className="min-h-screen pt-20 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-md">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <Link to="/" className="inline-flex items-center gap-2 mb-6">
-                        <Logo className="w-12 h-12" shieldClassName="text-primary-500" lockClassName="text-primary-500" />
-                        <span className="text-2xl font-bold font-heading">
-                            <span className={textPrimary}>Cyber</span>
-                            <span className="text-primary-500">Vault</span>
-                        </span>
-                    </Link>
-                    <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>Welcome back</h1>
-                    <p className={textMuted}>Sign in to access your secure vault</p>
+        <div className="min-h-screen flex flex-col pt-20 pb-4 px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-[420px] mx-auto my-auto">
+                <div className="text-center mb-6">
+                    <h1 className={`text-2xl font-bold mb-1 ${textPrimary}`}>Welcome back</h1>
+                    <p className={`text-sm ${textMuted}`}>Sign in to access your secure vault</p>
                 </div>
 
                 {/* Login Form */}
-                <div className="glass-card p-8">
+                <div className="glass-card p-6">
+                    {/* File Info from state (if redirected from Share/Download) */}
+                    {state?.action && state?.fileName && (
+                        <div className="mb-4">
+                            <div className="flex justify-center mb-3">
+                                <div className="w-12 h-12 rounded-2xl bg-primary-500/15 flex items-center justify-center">
+                                    <Lock className="w-6 h-6 text-primary-500" />
+                                </div>
+                            </div>
+                            <div className="text-center mb-4">
+                                <h3 className={`text-xl font-bold mb-2 ${textPrimary}`}>
+                                    Authentication Required
+                                </h3>
+                                <p className={`text-sm ${textMuted}`}>
+                                    Please sign in or create an account to {state.action} files securely.
+                                </p>
+                            </div>
+                            <div className={`flex items-center gap-3 p-3 rounded-xl mb-6 ${isDark ? 'bg-[#1E293B]' : 'bg-[#E4F3EC]'}`}>
+                                <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+                                    <FileIcon className="h-5 w-5 text-primary-500" />
+                                </div>
+                                <div className="min-w-0 flex-1 text-left">
+                                    <p className={`text-xs ${isDark ? 'text-dark-400' : 'text-[#64748B]'}`}>
+                                        Sign in to {state.action} this file
+                                    </p>
+                                    <p className={`font-medium text-sm truncate ${textPrimary}`}>
+                                        {state.fileName}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
-                            {error}
+                        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                            <p className="text-red-500 text-xs flex-1">
+                                {error}
+                            </p>
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit}>
                         {/* Email */}
-                        <div className="mb-5">
-                            <label htmlFor="email" className={`block text-sm font-medium mb-2 ${textMuted}`}>
+                        <div className="mb-4">
+                            <label htmlFor="email" className={`block text-sm font-medium mb-1.5 ${textMuted}`}>
                                 Email Address
                             </label>
                             <div className="relative">
@@ -109,8 +202,8 @@ export default function Login() {
                         </div>
 
                         {/* Password */}
-                        <div className="mb-5">
-                            <label htmlFor="password" className={`block text-sm font-medium mb-2 ${textMuted}`}>
+                        <div className="mb-4">
+                            <label htmlFor="password" className={`block text-sm font-medium mb-1.5 ${textMuted}`}>
                                 Password
                             </label>
                             <div className="relative">
@@ -136,7 +229,7 @@ export default function Login() {
                         </div>
 
                         {/* Remember Me & Forgot Password */}
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-5">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -144,7 +237,7 @@ export default function Login() {
                                     checked={formData.rememberMe}
                                     onChange={handleChange}
                                     className={`w-4 h-4 rounded text-primary-500 focus:ring-primary-500 ${isDark
-                                        ? 'border-gray-600 bg-dark-800'
+                                        ? 'border-gray-600 bg-[#1E293B]'
                                         : 'border-gray-300 bg-white'
                                         }`}
                                 />
@@ -175,9 +268,9 @@ export default function Login() {
                         </button>
 
                         {/* Divider */}
-                        <div className="relative my-6">
+                        <div className="relative my-4">
                             <div className="absolute inset-0 flex items-center">
-                                <div className={`w-full border-t ${isDark ? 'border-dark-600' : 'border-gray-200'}`}></div>
+                                <div className={`w-full border-t ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}></div>
                             </div>
                             <div className="relative flex justify-center text-xs">
                                 <span className={`px-2 ${isDark ? 'bg-dark-900 text-gray-500' : 'bg-white text-gray-500'}`}>

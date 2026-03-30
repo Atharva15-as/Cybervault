@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import Logo from '../../components/Logo';
 import PasswordStrengthMeter from '../../components/PasswordStrengthMeter';
 
 export default function Register() {
@@ -13,9 +12,9 @@ export default function Register() {
     const isDark = theme === 'dark';
 
     // Text colors
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
-    const textSubtle = isDark ? 'text-gray-500' : 'text-gray-500';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
+    const textSubtle = isDark ? 'text-[#94A3B8]' : 'text-[#94A3B8]';
 
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -94,8 +93,8 @@ export default function Register() {
 
     if (success) {
         return (
-            <div className="min-h-screen pt-20 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-                <div className="w-full max-w-md text-center">
+            <div className="min-h-screen flex flex-col pt-24 px-4 sm:px-6 lg:px-8">
+                <div className="w-full max-w-md text-center mx-auto my-auto pb-12">
                     <div className="glass-card p-8">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-6">
                             <Check className="h-8 w-8 text-green-500" />
@@ -115,32 +114,24 @@ export default function Register() {
     }
 
     return (
-        <div className="min-h-screen pt-20 pb-12 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-md">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <Link to="/" className="inline-flex items-center gap-2 mb-6">
-                        <Logo className="w-12 h-12" shieldClassName="text-primary-500" lockClassName="text-primary-500" />
-                        <span className="text-2xl font-bold font-heading">
-                            <span className={textPrimary}>Cyber</span>
-                            <span className="text-primary-500">Vault</span>
-                        </span>
-                    </Link>
-                    <h1 className={`text-2xl font-bold mb-2 ${textPrimary}`}>Create your account</h1>
-                    <p className={textMuted}>Start securing your files today</p>
+        <div className="min-h-screen flex flex-col pt-20 pb-4 px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-[420px] mx-auto my-auto">
+                <div className="text-center mb-6">
+                    <h1 className={`text-2xl font-bold mb-1 ${textPrimary}`}>Create your account</h1>
+                    <p className={`text-sm ${textMuted}`}>Start securing your files today</p>
                 </div>
 
                 {/* Register Form */}
-                <div className="glass-card p-8">
+                <div className="glass-card p-6">
                     {/* Error Message */}
                     {error && (
-                        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm">
+                        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs text-center">
                             {error}
                         </div>
                     )}
 
                     {/* Social Login */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
                         <button
                             onClick={handleGoogleLogin}
                             disabled={socialLoading !== null}
@@ -179,9 +170,9 @@ export default function Register() {
                     </div>
 
                     {/* Divider */}
-                    <div className="relative mb-6">
+                    <div className="relative mb-4">
                         <div className={`absolute inset-0 flex items-center`}>
-                            <div className={`w-full border-t ${isDark ? 'border-dark-600' : 'border-gray-200'}`}></div>
+                            <div className={`w-full border-t ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}></div>
                         </div>
                         <div className="relative flex justify-center text-xs">
                             <span className={`px-2 ${isDark ? 'bg-dark-900 text-gray-500' : 'bg-white text-gray-500'}`}>
@@ -192,8 +183,8 @@ export default function Register() {
 
                     <form onSubmit={handleSubmit}>
                         {/* Full Name */}
-                        <div className="mb-5">
-                            <label htmlFor="name" className={`block text-sm font-medium mb-2 ${textMuted}`}>
+                        <div className="mb-4">
+                            <label htmlFor="name" className={`block text-sm font-medium mb-1.5 ${textMuted}`}>
                                 Full Name
                             </label>
                             <div className="relative">
@@ -212,8 +203,8 @@ export default function Register() {
                         </div>
 
                         {/* Email */}
-                        <div className="mb-5">
-                            <label htmlFor="email" className={`block text-sm font-medium mb-2 ${textMuted}`}>
+                        <div className="mb-4">
+                            <label htmlFor="email" className={`block text-sm font-medium mb-1.5 ${textMuted}`}>
                                 Email Address
                             </label>
                             <div className="relative">
@@ -232,8 +223,8 @@ export default function Register() {
                         </div>
 
                         {/* Password */}
-                        <div className="mb-5">
-                            <label htmlFor="password" className={`block text-sm font-medium mb-2 ${textMuted}`}>
+                        <div className="mb-4">
+                            <label htmlFor="password" className={`block text-sm font-medium mb-1.5 ${textMuted}`}>
                                 Password
                             </label>
                             <div className="relative">
@@ -260,8 +251,8 @@ export default function Register() {
                         </div>
 
                         {/* Confirm Password */}
-                        <div className="mb-5">
-                            <label htmlFor="confirmPassword" className={`block text-sm font-medium mb-2 ${textMuted}`}>
+                        <div className="mb-4">
+                            <label htmlFor="confirmPassword" className={`block text-sm font-medium mb-1.5 ${textMuted}`}>
                                 Confirm Password
                             </label>
                             <div className="relative">
@@ -280,9 +271,9 @@ export default function Register() {
                         </div>
 
                         {/* Password Requirements */}
-                        <div className={`mb-5 p-4 rounded-lg ${isDark ? 'bg-dark-800/50' : 'bg-gray-50'}`}>
-                            <p className={`text-xs mb-2 ${textSubtle}`}>Password requirements:</p>
-                            <div className="grid grid-cols-2 gap-2">
+                        <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-dark-800/50' : 'bg-[#E4F3EC]'}`}>
+                            <p className={`text-xs mb-1.5 ${textSubtle}`}>Password requirements:</p>
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                                 {passwordRequirements.map((req) => (
                                     <div key={req.label} className="flex items-center gap-2">
                                         <div
@@ -302,7 +293,7 @@ export default function Register() {
                         </div>
 
                         {/* Terms Agreement */}
-                        <div className="mb-6">
+                        <div className="mb-5">
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -310,7 +301,7 @@ export default function Register() {
                                     checked={formData.agreeTerms}
                                     onChange={handleChange}
                                     required
-                                    className={`mt-1 w-4 h-4 rounded text-primary-500 focus:ring-primary-500 ${isDark ? 'border-gray-600 bg-dark-800' : 'border-gray-300 bg-white'}`}
+                                    className={`mt-1 w-4 h-4 rounded text-primary-500 focus:ring-primary-500 ${isDark ? 'border-gray-600 bg-[#1E293B]' : 'border-gray-300 bg-white'}`}
                                 />
                                 <span className={`text-sm ${textMuted}`}>
                                     I agree to the{' '}

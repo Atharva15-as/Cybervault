@@ -5,7 +5,7 @@
 
 /* CSS Custom Properties */
 .scanner-root {
-    --neon-cyan: #00fff5;
+    --neon-cyan: #34d399;
     --neon-magenta: #ff00e5;
     --neon-green: #39ff14;
     --neon-red: #ff3344;
@@ -21,13 +21,13 @@
 
 /* Light mode overrides */
 .light .scanner-root {
-    --neon-cyan: #0891b2;
+    --neon-cyan: #059669;
     --neon-magenta: #c026d3;
     --neon-green: #16a34a;
     --neon-red: #dc2626;
     --neon-yellow: #ca8a04;
     --neon-orange: #ea580c;
-    --cyber-bg: #F5EFE0;
+    --cyber-bg: #F2FAF6;
     --cyber-surface: #ffffff;
     --cyber-card: #ffffff;
     --cyber-border: #e5e7eb;
@@ -48,7 +48,7 @@
     position: fixed;
     inset: 0;
     background:
-        radial-gradient(ellipse at 20% 50%, rgba(0, 255, 245, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 50%, rgba(52, 211, 153, 0.04) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 20%, rgba(255, 0, 229, 0.03) 0%, transparent 50%),
         radial-gradient(ellipse at 50% 90%, rgba(57, 255, 20, 0.02) 0%, transparent 50%);
     pointer-events: none;
@@ -57,7 +57,7 @@
 
 .light .scanner-bg::before {
     background:
-        radial-gradient(ellipse at 20% 50%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
 }
 
@@ -67,8 +67,8 @@
     position: fixed;
     inset: 0;
     background-image:
-        linear-gradient(rgba(0, 255, 245, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 245, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(52, 211, 153, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 211, 153, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
@@ -117,8 +117,8 @@
 }
 
 .cyber-card:hover {
-    border-color: rgba(0, 255, 245, 0.3);
-    box-shadow: 0 0 30px rgba(0, 255, 245, 0.08), inset 0 0 30px rgba(0, 255, 245, 0.02);
+    border-color: rgba(52, 211, 153, 0.3);
+    box-shadow: 0 0 30px rgba(52, 211, 153, 0.08), inset 0 0 30px rgba(52, 211, 153, 0.02);
 }
 
 .light .cyber-card {
@@ -128,19 +128,19 @@
 }
 
 .light .cyber-card::before {
-    background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
     opacity: 0.5;
 }
 
 .light .cyber-card:hover {
-    border-color: rgba(6, 182, 212, 0.4);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 20px rgba(6, 182, 212, 0.06);
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 20px rgba(16, 185, 129, 0.06);
 }
 
 /* Neon Text */
 .neon-cyan {
     color: var(--neon-cyan);
-    text-shadow: 0 0 10px rgba(0, 255, 245, 0.5);
+    text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
 }
 
 .neon-magenta {
@@ -221,14 +221,14 @@
 }
 
 .cyber-btn:hover {
-    background: rgba(0, 255, 245, 0.1);
-    box-shadow: 0 0 20px rgba(0, 255, 245, 0.3), inset 0 0 20px rgba(0, 255, 245, 0.05);
-    text-shadow: 0 0 8px rgba(0, 255, 245, 0.6);
+    background: rgba(52, 211, 153, 0.1);
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.3), inset 0 0 20px rgba(52, 211, 153, 0.05);
+    text-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
 }
 
 .cyber-btn-solid {
-    background: linear-gradient(135deg, rgba(0, 255, 245, 0.15), rgba(0, 255, 245, 0.05));
-    border: 1px solid rgba(0, 255, 245, 0.4);
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(52, 211, 153, 0.05));
+    border: 1px solid rgba(52, 211, 153, 0.4);
     color: var(--neon-cyan);
     padding: 12px 28px;
     border-radius: 8px;
@@ -240,8 +240,8 @@
 }
 
 .cyber-btn-solid:hover {
-    background: linear-gradient(135deg, rgba(0, 255, 245, 0.25), rgba(0, 255, 245, 0.1));
-    box-shadow: 0 0 30px rgba(0, 255, 245, 0.2);
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.25), rgba(52, 211, 153, 0.1));
+    box-shadow: 0 0 30px rgba(52, 211, 153, 0.2);
 }
 
 .cyber-btn-danger {
@@ -270,7 +270,7 @@
 
 .cyber-input:focus {
     border-color: var(--neon-cyan);
-    box-shadow: 0 0 15px rgba(0, 255, 245, 0.15);
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.15);
 }
 
 .cyber-input::placeholder {
@@ -284,8 +284,8 @@
 }
 
 .light .cyber-input:focus {
-    border-color: #0891b2;
-    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 
 .light .cyber-input::placeholder {
@@ -307,8 +307,8 @@
 .drop-zone:hover,
 .drop-zone.drag-over {
     border-color: var(--neon-cyan);
-    background: rgba(0, 255, 245, 0.03);
-    box-shadow: 0 0 40px rgba(0, 255, 245, 0.08);
+    background: rgba(52, 211, 153, 0.03);
+    box-shadow: 0 0 40px rgba(52, 211, 153, 0.08);
 }
 
 .light .drop-zone {
@@ -318,8 +318,8 @@
 
 .light .drop-zone:hover,
 .light .drop-zone.drag-over {
-    border-color: #0891b2;
-    background: rgba(8, 145, 178, 0.03);
+    border-color: #059669;
+    background: rgba(5, 150, 105, 0.03);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
@@ -331,11 +331,11 @@
 
     0%,
     100% {
-        box-shadow: 0 0 20px rgba(0, 255, 245, 0.08);
+        box-shadow: 0 0 20px rgba(52, 211, 153, 0.08);
     }
 
     50% {
-        box-shadow: 0 0 40px rgba(0, 255, 245, 0.15);
+        box-shadow: 0 0 40px rgba(52, 211, 153, 0.15);
     }
 }
 
@@ -354,7 +354,7 @@
     background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
     border-radius: 2px;
     transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(0, 255, 245, 0.5);
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
 }
 
 /* Threat Badges */
@@ -407,9 +407,9 @@
 }
 
 .threat-badge-low {
-    background: rgba(0, 255, 245, 0.1);
+    background: rgba(52, 211, 153, 0.1);
     color: var(--neon-cyan);
-    border: 1px solid rgba(0, 255, 245, 0.3);
+    border: 1px solid rgba(52, 211, 153, 0.3);
 }
 
 /* Scanner Tabs */
@@ -439,13 +439,13 @@
 .scanner-tab:hover {
     color: var(--neon-cyan);
     background: #252538;
-    border-color: rgba(0, 255, 245, 0.3);
+    border-color: rgba(52, 211, 153, 0.3);
 }
 
 .scanner-tab.active {
-    background: rgba(0, 255, 245, 0.1);
+    background: rgba(52, 211, 153, 0.1);
     color: var(--neon-cyan);
-    box-shadow: 0 0 15px rgba(0, 255, 245, 0.1);
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.1);
 }
 
 .light .scanner-tab {
@@ -455,16 +455,16 @@
 }
 
 .light .scanner-tab:hover {
-    color: #0891b2;
+    color: #059669;
     background: #f9fafb;
-    border-color: rgba(8, 145, 178, 0.3);
+    border-color: rgba(5, 150, 105, 0.3);
 }
 
 .light .scanner-tab.active {
-    background: rgba(8, 145, 178, 0.08);
-    color: #0891b2;
-    border-color: rgba(8, 145, 178, 0.4);
-    box-shadow: 0 1px 4px rgba(8, 145, 178, 0.1);
+    background: rgba(5, 150, 105, 0.08);
+    color: #059669;
+    border-color: rgba(5, 150, 105, 0.4);
+    box-shadow: 0 1px 4px rgba(5, 150, 105, 0.1);
 }
 
 /* Terminal-style text */
@@ -517,7 +517,7 @@
 }
 
 .engine-table tr:hover td {
-    background: rgba(0, 255, 245, 0.03);
+    background: rgba(52, 211, 153, 0.03);
 }
 
 .light .engine-table td {
@@ -533,11 +533,11 @@
 
     0%,
     100% {
-        filter: drop-shadow(0 0 8px rgba(0, 255, 245, 0.3));
+        filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.3));
     }
 
     50% {
-        filter: drop-shadow(0 0 20px rgba(0, 255, 245, 0.6));
+        filter: drop-shadow(0 0 20px rgba(52, 211, 153, 0.6));
     }
 }
 
@@ -573,7 +573,7 @@
 }
 
 .light .stat-card::after {
-    background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.5), transparent);
     opacity: 0.3;
 }
 
@@ -626,9 +626,9 @@
 }
 
 .capability-card:hover {
-    border-color: rgba(0, 255, 245, 0.3) !important;
-    background: rgba(0, 255, 245, 0.03) !important;
-    box-shadow: 0 0 20px rgba(0, 255, 245, 0.06), inset 0 0 20px rgba(0, 255, 245, 0.01);
+    border-color: rgba(52, 211, 153, 0.3) !important;
+    background: rgba(52, 211, 153, 0.03) !important;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.06), inset 0 0 20px rgba(52, 211, 153, 0.01);
     transform: translateY(-1px);
 }
 
@@ -646,13 +646,13 @@
 }
 
 .light .capability-card:hover {
-    border-color: rgba(8, 145, 178, 0.4) !important;
-    background: rgba(8, 145, 178, 0.04) !important;
+    border-color: rgba(5, 150, 105, 0.4) !important;
+    background: rgba(5, 150, 105, 0.04) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .light .capability-card::before {
-    background: linear-gradient(90deg, transparent, rgba(8, 145, 178, 0.5), transparent);
+    background: linear-gradient(90deg, transparent, rgba(5, 150, 105, 0.5), transparent);
 }
 
 /* ==============================

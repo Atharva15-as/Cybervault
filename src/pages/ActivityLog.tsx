@@ -34,7 +34,7 @@ const activityIcons: Record<ActivityType, React.ElementType> = {
 };
 
 const activityColors: Record<ActivityType, string> = {
-    file_upload: 'text-blue-500 bg-blue-500/10',
+    file_upload: 'text-primary-500 bg-primary-500/10',
     file_download: 'text-green-500 bg-green-500/10',
     file_share: 'text-primary-500 bg-primary-500/10',
     file_delete: 'text-red-500 bg-red-500/10',
@@ -66,8 +66,8 @@ export default function ActivityLog() {
     const [filter, setFilter] = useState<ActivityType | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    const textPrimary = isDark ? 'text-white' : 'text-gray-900';
-    const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
+    const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
+    const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
 
     useEffect(() => {
         loadActivities();
@@ -82,9 +82,9 @@ export default function ActivityLog() {
                 { type: 'scan_file', title: 'File Scanned', desc: 'Security scan completed for Financial_Report_2024.pdf', minAgo: 5 },
                 { type: 'file_share', title: 'File Shared', desc: 'Shared Financial_Report_2024.pdf via secure link', minAgo: 10 },
                 { type: 'login', title: 'Login', desc: 'Signed in with Google OAuth', minAgo: 30 },
-                { type: 'file_upload', title: 'File Uploaded', desc: 'Uploaded Project_Documentation.docx', minAgo: 60 },
+                { type: 'file_upload', title: 'File Uploaded', desc: 'Uploaded Project_Backup.zip', minAgo: 60 },
                 { type: 'scan_url', title: 'URL Scanned', desc: 'Scanned https://example.com for threats', minAgo: 120 },
-                { type: 'file_download', title: 'File Downloaded', desc: 'Downloaded Project_Documentation.docx', minAgo: 180 },
+                { type: 'file_download', title: 'File Downloaded', desc: 'Downloaded Project_Backup.zip', minAgo: 180 },
                 { type: 'community_join', title: 'Joined Community', desc: 'Joined "CyberSec Research" community', minAgo: 1440 },
             ];
             demoActivities.forEach(d => {
@@ -147,7 +147,7 @@ export default function ActivityLog() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     {[
                         { label: 'Today', value: stats.today, icon: Clock, color: 'text-primary-500' },
-                        { label: 'Uploads', value: stats.uploads, icon: Upload, color: 'text-blue-500' },
+                        { label: 'Uploads', value: stats.uploads, icon: Upload, color: 'text-primary-500' },
                         { label: 'Shares', value: stats.shares, icon: Share2, color: 'text-green-500' },
                         { label: 'Scans', value: stats.scans, icon: Shield, color: 'text-purple-500' },
                     ].map(stat => (
@@ -183,7 +183,7 @@ export default function ActivityLog() {
                                 className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${filter === opt.value
                                     ? 'bg-primary-500 text-white'
                                     : isDark
-                                        ? 'bg-dark-800 text-gray-400 hover:text-white hover:bg-dark-700'
+                                        ? 'bg-dark-800 text-dark-400 hover:text-dark-200 hover:bg-[#334155]'
                                         : 'bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200'
                                     }`}
                             >
@@ -210,7 +210,7 @@ export default function ActivityLog() {
                                 return (
                                     <div
                                         key={activity.id}
-                                        className={`flex items-center gap-4 px-6 py-4 transition-colors ${isDark ? 'hover:bg-dark-800/30' : 'hover:bg-gray-50'
+                                        className={`flex items-center gap-4 px-6 py-4 transition-colors ${isDark ? 'hover:bg-dark-800/30' : 'hover:bg-[#E4F3EC]'
                                             }`}
                                     >
                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${colorClass}`}>

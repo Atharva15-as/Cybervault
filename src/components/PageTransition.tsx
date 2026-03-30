@@ -16,6 +16,7 @@ export default function PageTransition({ children }: PageTransitionProps) {
             const timeout = setTimeout(() => {
                 setDisplayLocation(location);
                 setIsVisible(true);
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
             }, 200);
             return () => clearTimeout(timeout);
         }

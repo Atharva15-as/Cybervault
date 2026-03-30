@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Shield, LayoutDashboard, Users, Menu } from 'lucide-react';
+import { Home, Shield, LayoutDashboard, Users, Lock } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,7 +8,7 @@ const navItems = [
     { icon: Shield, label: 'Scanner', path: '/scanner' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', auth: true },
     { icon: Users, label: 'Community', path: '/communities', auth: true },
-    { icon: Menu, label: 'More', path: '/features' },
+    { icon: Lock, label: 'Encrypt', path: '/file-encrypt-decrypt' },
 ];
 
 export default function MobileBottomNav() {
@@ -22,8 +22,8 @@ export default function MobileBottomNav() {
     return (
         <nav
             className={`fixed bottom-0 left-0 right-0 z-50 md:hidden border-t backdrop-blur-xl transition-colors ${isDark
-                ? 'bg-dark-950/95 border-dark-800'
-                : 'bg-white/95 border-gray-200'
+                ? 'bg-dark-950/95 border-[#334155]'
+                : 'bg-white/95 border-[#CBD5E1]'
                 }`}
             id="mobile-bottom-nav"
         >
