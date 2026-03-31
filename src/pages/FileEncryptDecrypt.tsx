@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import repoInspiredFileCryptoService from '../services/repoInspiredFileCryptoService';
-import { CircleHelp, Copy, Download, Eye, EyeOff, Lock, RefreshCw, ShieldCheck, Unlock, Upload } from 'lucide-react';
+import { CircleHelp, Copy, Download, Eye, EyeOff, Lock, RefreshCw, Share2, ShieldCheck, Unlock, Upload } from 'lucide-react';
 import storageEncryptionService, { UploadedFileRecord } from '../services/storageEncryptionService';
+import ShareModal from '../components/ShareModal';
 
 type Mode = 'encrypt' | 'decrypt';
+type EncryptOutputMode = 'local' | 'managed';
 
 interface FileEncryptDecryptProps {
     embedded?: boolean;
@@ -36,11 +38,24 @@ export default function FileEncryptDecrypt({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [mode, setMode] = useState<Mode>('encrypt');
+    const [encryptOutputMode, setEncryptOutputMode] = useState<EncryptOutputMode>(
+        enableManagedEncrypt || !embedded ? 'managed' : 'local'
+    );
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [key, setKey] = useState('');
     const [working, setWorking] = useState(false);
     const [showKeyHelp, setShowKeyHelp] = useState(false);
     const [showKey, setShowKey] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [managedResult, setManagedResult] = useState<{
+        fileId: string;
+        encryptedBlob: Blob;
+        encryptedFileName: string;
+        passphrase: string;
+        shareToken: string;
+        shareUrl: string;
+        fileRecord: UploadedFileRecord;
+    } | null>(null);
 
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
     const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
@@ -92,7 +107,9 @@ export default function FileEncryptDecrypt({
         setWorking(true);
         try {
             if (mode === 'encrypt') {
-                if (enableManagedEncrypt) {
+                setManagedResult(null);
+
+                if (encryptOutputMode === 'managed') {
                     const uploadResult = await storageEncryptionService.uploadEncryptedFile(selectedFile, {
                         passphrase: key,
                     });
@@ -110,7 +127,7 @@ export default function FileEncryptDecrypt({
                         throw uploadResult.error || new Error('Failed to encrypt and upload file');
                     }
 
-                    onManagedEncryptSuccess?.({
+                    const payload = {
                         fileId: uploadResult.fileId,
                         encryptedBlob: uploadResult.encryptedBlob,
                         encryptedFileName: uploadResult.encryptedFileName,
@@ -118,7 +135,10 @@ export default function FileEncryptDecrypt({
                         shareToken: uploadResult.shareToken,
                         shareUrl: uploadResult.shareUrl,
                         fileRecord: uploadResult.fileRecord,
-                    });
+                    };
+
+                    setManagedResult(payload);
+                    onManagedEncryptSuccess?.(payload);
 
                     addToast({
                         type: 'success',
@@ -144,6 +164,11 @@ export default function FileEncryptDecrypt({
         } finally {
             setWorking(false);
         }
+    };
+
+    const downloadEncryptedNow = () => {
+        if (!managedResult) return;
+        downloadBlob(managedResult.encryptedBlob, managedResult.encryptedFileName);
     };
 
     return (
@@ -232,6 +257,32 @@ export default function FileEncryptDecrypt({
                             Decrypt
                         </button>
                     </div>
+
+                    {mode === 'encrypt' && (
+                        <div className={`rounded-xl border p-3 ${isDark ? 'bg-[#1E293B]/40 border-[#334155]' : 'bg-[#F8FCFA] border-[#CBD5E1]'}`}>
+                            <p className={`text-xs font-medium mb-2 ${textMuted}`}>Encryption Output Mode</p>
+                            <div className={`flex gap-2 p-1 rounded-lg ${isDark ? 'bg-[#0F172A]' : 'bg-[#E4F3EC]'}`}>
+                                <button
+                                    type="button"
+                                    onClick={() => setEncryptOutputMode('local')}
+                                    className={`flex-1 py-2 rounded-md text-xs font-medium transition ${
+                                        encryptOutputMode === 'local' ? 'bg-primary-500 text-white' : textMuted
+                                    }`}
+                                >
+                                    Local-only (Direct Download)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEncryptOutputMode('managed')}
+                                    className={`flex-1 py-2 rounded-md text-xs font-medium transition ${
+                                        encryptOutputMode === 'managed' ? 'bg-primary-500 text-white' : textMuted
+                                    }`}
+                                >
+                                    Managed (Share Link/QR/Email)
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {embedded && showStepCards && (
                         <div className={`rounded-lg border px-4 py-3 ${isDark ? 'bg-[#1E293B]/40 border-[#334155]' : 'bg-[#F8FCFA] border-[#CBD5E1]'}`}>
@@ -343,8 +394,48 @@ export default function FileEncryptDecrypt({
                                 ? 'Secure & Export .enc'
                                 : 'Decrypt & Recover File'}
                     </button>
+
+                    {mode === 'encrypt' && encryptOutputMode === 'managed' && managedResult && (
+                        <div className={`rounded-xl border p-4 md:p-5 ${isDark ? 'bg-[#1E293B]/40 border-[#334155]' : 'bg-[#F8FCFA] border-[#CBD5E1]'}`}>
+                            <div className="flex items-start gap-3 mb-4">
+                                <ShieldCheck className="h-5 w-5 text-green-500 mt-0.5" />
+                                <div>
+                                    <p className={`font-semibold ${textPrimary}`}>Encrypted Successfully</p>
+                                    <p className={`text-sm ${textMuted}`}>
+                                        {managedResult.encryptedFileName} is ready. Download it now or share using secure link and QR.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3">
+                                <button onClick={downloadEncryptedNow} className="btn-primary">
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Download .enc
+                                </button>
+                                <button onClick={() => setShowShareModal(true)} className="btn-secondary">
+                                    <Share2 className="h-4 w-4 mr-2" />
+                                    Share Link / QR
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                file={managedResult ? {
+                    id: managedResult.fileRecord.id,
+                    name: managedResult.fileRecord.fileName,
+                    hash: managedResult.fileRecord.hash,
+                    expiryDate: managedResult.fileRecord.expiryDate,
+                    hasPin: true,
+                    downloadCount: managedResult.fileRecord.downloadCount,
+                    shareToken: managedResult.fileRecord.shareToken,
+                    shareUrl: managedResult.fileRecord.shareUrl,
+                } : null}
+            />
         </div>
     );
 }

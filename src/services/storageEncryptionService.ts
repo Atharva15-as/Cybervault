@@ -45,6 +45,15 @@ const PRIMARY_STORAGE_BUCKET = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET || '
 const FALLBACK_STORAGE_BUCKETS = ['encrypted-files', 'user-files', 'encrypted_files', 'userfiles'];
 
 export const storageEncryptionService = {
+    getAppShareUrl(shareToken: string): string {
+        if (typeof window !== 'undefined' && window.location?.origin) {
+            return `${window.location.origin}/share/${shareToken}`;
+        }
+
+        const fallbackOrigin = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
+        return `${fallbackOrigin.replace(/\/$/, '')}/share/${shareToken}`;
+    },
+
     resolveBucketCandidates(): string[] {
         const all = [PRIMARY_STORAGE_BUCKET, ...FALLBACK_STORAGE_BUCKETS];
         return Array.from(new Set(all.map((b) => b.trim()).filter(Boolean)));
@@ -176,12 +185,8 @@ export const storageEncryptionService = {
 
             // Upload encrypted file to Supabase Storage
             options.onProgress?.('Uploading to storage...', 70);
-            const { bucket: selectedBucket } = await this.uploadToAvailableBucket(storagePath, encryptedBlob);
-
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from(selectedBucket)
-                .getPublicUrl(storagePath);
+            await this.uploadToAvailableBucket(storagePath, encryptedBlob);
+            const shareUrl = this.getAppShareUrl(shareToken);
 
             // Calculate expiry date
             options.onProgress?.('Saving metadata...', 80);
@@ -206,7 +211,7 @@ export const storageEncryptionService = {
                     pin_hash: '', // Can be set separately if needed
                     storage_path: storagePath,
                     share_token: shareToken,
-                    share_url: publicUrl,
+                    share_url: shareUrl,
                     expiry_date: expiryDate.toISOString(),
                     expiry_duration: expiryDuration,
                     max_downloads: options.maxDownloads || 0,
@@ -229,7 +234,7 @@ export const storageEncryptionService = {
                 success: true,
                 fileId: fileRecord.id,
                 shareToken: shareToken,
-                shareUrl: publicUrl,
+                shareUrl,
                 passphrase: passphraseUsed,
                 encryptedBlob,
                 encryptedFileName,
@@ -240,7 +245,7 @@ export const storageEncryptionService = {
                     expiryDate: new Date(fileRecord.expiry_date),
                     downloadCount: fileRecord.download_count || 0,
                     shareToken,
-                    shareUrl: publicUrl,
+                    shareUrl,
                 },
             };
         } catch (error) {
@@ -481,12 +486,12 @@ export const storageEncryptionService = {
     /**
      * Generate a random share token
      */
-    generateShareToken(): string {
+    generateShareToken(length = 20): string {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let token = '';
-        const values = new Uint8Array(32);
+        const values = new Uint8Array(length);
         crypto.getRandomValues(values);
-        for (let i = 0; i < 32; i++) {
+        for (let i = 0; i < length; i++) {
             token += chars[values[i] % chars.length];
         }
         return token;

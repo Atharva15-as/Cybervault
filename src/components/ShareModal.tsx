@@ -50,7 +50,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
         if (isOpen && file) {
             const token = file.shareToken || generateShareToken();
             setShareToken(token);
-            const url = file.shareUrl || `${window.location.origin}/share/${token}`;
+            const url = `${window.location.origin}/share/${token}`;
             setShareUrl(url);
 
             if (onShareCreated) {
