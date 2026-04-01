@@ -5,6 +5,7 @@ import repoInspiredFileCryptoService from '../services/repoInspiredFileCryptoSer
 import { CircleHelp, Copy, Download, Eye, EyeOff, Lock, RefreshCw, Share2, ShieldCheck, Unlock, Upload } from 'lucide-react';
 import storageEncryptionService, { UploadedFileRecord } from '../services/storageEncryptionService';
 import ShareModal from '../components/ShareModal';
+import { encryptionService } from '../services/encryptionService';
 
 type Mode = 'encrypt' | 'decrypt';
 type EncryptOutputMode = 'local' | 'managed';
@@ -151,9 +152,33 @@ export default function FileEncryptDecrypt({
                     addToast({ type: 'success', title: 'Encrypted', message: 'Encrypted file downloaded successfully.' });
                 }
             } else {
-                const { blob, fileName } = await repoInspiredFileCryptoService.decryptFile(selectedFile, key);
-                downloadBlob(blob, fileName);
-                addToast({ type: 'success', title: 'Decrypted', message: 'Original file recovered successfully.' });
+                let decryptedBlob: Blob | null = null;
+                let decryptedName: string = '';
+
+                try {
+                    // Try the repo-inspired format first (which has a strict version check)
+                    const { blob, fileName } = await repoInspiredFileCryptoService.decryptFile(selectedFile, key);
+                    decryptedBlob = blob;
+                    decryptedName = fileName;
+                } catch (repoError: any) {
+                    if (repoError.message === 'Unsupported encrypted file version.' || repoError.message === 'Encrypted file is invalid or corrupted.') {
+                        // Fallback to encryptionService format (used by managed mode)
+                        try {
+                            const { blob, fileName } = await encryptionService.decryptFile(selectedFile, key);
+                            decryptedBlob = blob;
+                            decryptedName = fileName;
+                        } catch (encError: any) {
+                            throw new Error('Decryption failed. Unsupported format, wrong key, or corrupted file.');
+                        }
+                    } else {
+                        throw repoError;
+                    }
+                }
+
+                if (decryptedBlob && decryptedName) {
+                    downloadBlob(decryptedBlob, decryptedName);
+                    addToast({ type: 'success', title: 'Decrypted', message: 'Original file recovered successfully.' });
+                }
             }
         } catch (error) {
             addToast({
