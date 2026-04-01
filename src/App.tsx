@@ -10,6 +10,7 @@ import PageTransition from './components/PageTransition';
 import MobileBottomNav from './components/MobileBottomNav';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
 import ScrollToTop from './components/ScrollToTop';
+import { isSupabaseConfigured, supabaseConfigErrorMessage } from './lib/supabase';
 import { Loader2 } from 'lucide-react';
 
 // Lazy-loaded pages for code splitting
@@ -42,6 +43,30 @@ function PageLoader() {
             <div className="text-center">
                 <Loader2 className={`h-8 w-8 animate-spin mx-auto mb-3 text-primary-500`} />
                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Loading...</p>
+            </div>
+        </div>
+    );
+}
+
+function ConfigErrorScreen() {
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
+
+    return (
+        <div className={`min-h-screen flex items-center justify-center px-4 ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
+            <div className={`w-full max-w-2xl rounded-2xl border p-6 sm:p-8 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+                <h1 className={`text-2xl font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>Configuration Required</h1>
+                <p className={`text-sm sm:text-base mb-5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    This deployment is missing required Supabase environment variables, so authentication cannot start yet.
+                </p>
+                <div className={`rounded-lg p-4 mb-5 font-mono text-xs sm:text-sm break-all ${isDark ? 'bg-gray-950 text-red-300 border border-gray-800' : 'bg-gray-100 text-red-700 border border-gray-200'}`}>
+                    {supabaseConfigErrorMessage}
+                </div>
+                <ol className={`list-decimal pl-5 space-y-2 text-sm sm:text-base ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <li>Go to Vercel Project Settings and open Environment Variables.</li>
+                    <li>Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for Production.</li>
+                    <li>Redeploy the app, then refresh this page.</li>
+                </ol>
             </div>
         </div>
     );
@@ -145,13 +170,17 @@ function AppContent() {
 function App() {
     return (
         <ThemeProvider>
-            <AuthProvider>
-                <Router>
-                    <ToastProvider>
-                        <AppContent />
-                    </ToastProvider>
-                </Router>
-            </AuthProvider>
+            {isSupabaseConfigured ? (
+                <AuthProvider>
+                    <Router>
+                        <ToastProvider>
+                            <AppContent />
+                        </ToastProvider>
+                    </Router>
+                </AuthProvider>
+            ) : (
+                <ConfigErrorScreen />
+            )}
         </ThemeProvider>
     );
 }

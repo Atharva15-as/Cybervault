@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     Shield,
@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { canDeleteFile } from '../services/authorizationService';
 import ShareModal from '../components/ShareModal';
+import storageEncryptionService from '../services/storageEncryptionService';
 
 // --- Types ---
 interface SecureFile {
@@ -91,17 +92,16 @@ export default function Home() {
         setShowShareModal(true);
     };
 
-    const triggerMockDownload = (fileName: string) => {
-        const text = `This is securely decrypted content for ${fileName}\n\nDownloaded from CyberVault.`;
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    const openSecureDownload = (file: SecureFile) => {
+        if (!file.shareToken) {
+            addToast({
+                type: 'error',
+                title: 'Missing share link',
+                message: 'This file does not have a valid share token.',
+            });
+            return;
+        }
+        navigate(`/share/${file.shareToken}`);
     };
 
     const handleDownloadClick = (file: SecureFile) => {
@@ -114,8 +114,7 @@ export default function Home() {
             setFileToDownload(file);
             setShowSecurityWarning(true);
         } else {
-            addToast({ type: 'success', title: 'Download Started', message: `Downloading ${file.name}...` });
-            triggerMockDownload(file.name);
+            openSecureDownload(file);
         }
     };
 
@@ -133,11 +132,45 @@ export default function Home() {
     const proceedWithUnsafeDownload = () => {
         if (fileToDownload) {
             addToast({ type: 'warning', title: 'Unsafe Download', message: `Downloading ${fileToDownload.name} despite warnings...` });
-            triggerMockDownload(fileToDownload.name);
+            openSecureDownload(fileToDownload);
             setShowSecurityWarning(false);
             setFileToDownload(null);
         }
     };
+
+    useEffect(() => {
+        const loadFiles = async () => {
+            if (!user) {
+                setFiles([]);
+                return;
+            }
+
+            const result = await storageEncryptionService.getUserFiles();
+            if (!result.success || !result.files) return;
+
+            const mapped: SecureFile[] = result.files.map((file) => ({
+                id: file.id,
+                name: file.fileName,
+                size: storageEncryptionService.formatFileSize(file.fileSize),
+                uploadDate: file.uploadedAt.toLocaleDateString(),
+                status: 'encrypted',
+                shared: Boolean(file.shareToken),
+                expiresIn: null,
+                expiryDate: file.expiryDate,
+                maliciousScore: file.maliciousScore ?? 0,
+                securityStatus: file.securityStatus ?? 'safe',
+                hash: file.id.replace(/-/g, '').slice(0, 64).padEnd(64, '0'),
+                pinHash: '',
+                hasPin: true,
+                shareToken: file.shareToken || '',
+                shareUrl: file.shareUrl || '',
+            }));
+
+            setFiles(mapped);
+        };
+
+        loadFiles();
+    }, [user]);
 
     const filteredFiles = files.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -471,6 +504,8 @@ export default function Home() {
                     id: selectedFile.id, name: selectedFile.name, hash: selectedFile.hash,
                     expiryDate: selectedFile.expiryDate || new Date(Date.now() + 24 * 60 * 60 * 1000),
                     hasPin: selectedFile.hasPin,
+                    shareToken: selectedFile.shareToken,
+                    shareUrl: selectedFile.shareUrl,
                 } : null}
             />
 

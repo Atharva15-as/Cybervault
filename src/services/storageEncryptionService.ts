@@ -29,6 +29,8 @@ export interface StorageFile {
     maxDownloads: number;
     securityStatus: 'safe' | 'warning' | 'danger';
     maliciousScore: number;
+    shareToken?: string;
+    shareUrl?: string;
 }
 
 export interface UploadedFileRecord {
@@ -389,6 +391,8 @@ export const storageEncryptionService = {
                 maxDownloads: f.max_downloads,
                 securityStatus: f.security_status,
                 maliciousScore: f.malicious_score,
+                shareToken: f.share_token,
+                shareUrl: f.share_url,
             }));
 
             return { success: true, files: formattedFiles };
@@ -476,6 +480,37 @@ export const storageEncryptionService = {
             return { success: true };
         } catch (error) {
             console.error('Error deactivating file:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    async setLinkPassword(fileId: string, password: string | null): Promise<{
+        success: boolean;
+        error?: Error;
+    }> {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                throw new Error('User not authenticated');
+            }
+
+            const linkPasswordHash = password && password.trim().length > 0
+                ? await this.hashPassword(password.trim())
+                : null;
+
+            const { error } = await supabase
+                .from('shared_files')
+                .update({ link_password_hash: linkPasswordHash })
+                .eq('id', fileId)
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting link password:', error);
             return {
                 success: false,
                 error: error instanceof Error ? error : new Error(String(error)),

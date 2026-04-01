@@ -4,6 +4,7 @@ import { Lock, Download, Clock, Shield, AlertCircle, Eye, EyeOff, Hash, FileIcon
 import { useTheme } from '../context/ThemeContext';
 import { formatTimeRemaining } from '../utils/crypto';
 import { supabase } from '../lib/supabase';
+import storageEncryptionService from '../services/storageEncryptionService';
 
 // Interface for shared file data
 interface SharedFileData {
@@ -17,6 +18,7 @@ interface SharedFileData {
     downloadCount: number;
     encryptedHash?: string;
     storagePath?: string;
+    linkPasswordHash?: string | null;
 }
 
 // Mock shared file data - fallback for demo when database is empty
@@ -44,6 +46,8 @@ export default function SharedFile() {
     const [passphrase, setPassphrase] = useState('');
     const [showPassphrase, setShowPassphrase] = useState(false);
     const [passphraseError, setPassphraseError] = useState<string | null>(null);
+    const [linkPassword, setLinkPassword] = useState('');
+    const [showLinkPassword, setShowLinkPassword] = useState(false);
 
     // Decryption state
     const [isDecrypting, setIsDecrypting] = useState(false);
@@ -103,6 +107,7 @@ export default function SharedFile() {
                             downloadCount: fileRecord.download_count || 0,
                             encryptedHash: fileRecord.encrypted_hash,
                             storagePath: fileRecord.storage_path,
+                            linkPasswordHash: fileRecord.link_password_hash,
                         });
                     }
                 }
@@ -140,52 +145,65 @@ export default function SharedFile() {
             return;
         }
 
+        if (fileData.linkPasswordHash) {
+            if (!linkPassword.trim()) {
+                setPassphraseError('This link requires an additional link password');
+                return;
+            }
+
+            const isLinkPasswordValid = await storageEncryptionService.verifyPassword(
+                linkPassword.trim(),
+                fileData.linkPasswordHash
+            );
+
+            if (!isLinkPasswordValid) {
+                const newAttempts = pinAttempts + 1;
+                setPinAttempts(newAttempts);
+                setIntegrityStatus('failed');
+                if (newAttempts >= MAX_PIN_ATTEMPTS) {
+                    setLockoutUntil(Date.now() + LOCKOUT_DURATION_MS);
+                    setPassphraseError('Too many failed attempts. Locked out for 30 seconds.');
+                    setPassphrase('');
+                    setLinkPassword('');
+                } else {
+                    setPassphraseError(`Invalid link password. ${MAX_PIN_ATTEMPTS - newAttempts} attempt(s) remaining.`);
+                }
+                return;
+            }
+        }
+
         setIsDecrypting(true);
         setDecryptPercent(0);
-        setDecryptProgress('Connecting to decryption server...');
+        setDecryptProgress('Preparing secure decryption...');
 
         try {
-            // STEP 1: Fetch and Decrypt securely from BACKEND server
-            setDecryptPercent(20);
-            setDecryptProgress('Requesting secure decryption...');
-            
-            // Note: In a production app, the backend URL would be an environment variable.
-            // Using downloadSecurelyFromServer that hits localhost:3000/decrypt
-            const response = await downloadSelectedSecurely(fileData.id, passphrase, fileData.storagePath);
-
-            if (response.error) {
-                // If the error looks like a password error
-                if (response.error.toLowerCase().includes('password') || response.error.toLowerCase().includes('invalid')) {
-                    throw new Error(response.error);
-                }
-                throw new Error('Decryption server error: ' + response.error);
+            if (!token) {
+                throw new Error('Invalid share link');
             }
 
-            if (response.blob && response.fileName) {
-                setDecryptPercent(90);
-                setDecryptProgress('Verifying decrypted data...');
-                
-                // Final result
-                setDecryptedFile({
-                    blob: response.blob,
-                    fileName: response.fileName,
-                    fileSize: response.blob.size,
-                });
-                
-                setDecryptPercent(100);
-                setDecryptProgress('File ready!');
-                setIntegrityStatus('verified');
-                setPinAttempts(0);
-                
-                // Increment download count locally (optional if server does it)
-                try {
-                    await supabase.rpc('increment_download_count', { row_id: fileData.id });
-                } catch (e) {
-                    console.warn('Could not increment download count:', e);
-                }
-            } else {
-                throw new Error('Server returned an empty response');
+            const result = await storageEncryptionService.downloadEncryptedFile(token, passphrase, {
+                onProgress: (stage, percent) => {
+                    setDecryptProgress(stage);
+                    setDecryptPercent(Math.round(percent));
+                },
+            });
+
+            if (!result.success || !result.blob || !result.fileName) {
+                throw result.error || new Error('Failed to decrypt file');
             }
+
+            setDecryptPercent(90);
+            setDecryptProgress('Verifying decrypted data...');
+            setDecryptedFile({
+                blob: result.blob,
+                fileName: result.fileName,
+                fileSize: result.blob.size,
+            });
+
+            setDecryptPercent(100);
+            setDecryptProgress('File ready!');
+            setIntegrityStatus('verified');
+            setPinAttempts(0);
 
         } catch (err) {
             const newAttempts = pinAttempts + 1;
@@ -202,12 +220,6 @@ export default function SharedFile() {
         } finally {
             setIsDecrypting(false);
         }
-    };
-
-    // Wrapper for the service call to keep the component clean
-    const downloadSelectedSecurely = async (id: string, key: string, path?: string) => {
-        const { downloadSecurelyFromServer } = await import('../services/storageService');
-        return await downloadSecurelyFromServer(id, key, path);
     };
 
     const handleDownload = () => {
@@ -382,6 +394,36 @@ export default function SharedFile() {
                                 )}
                             </div>
 
+                            {fileData.linkPasswordHash && (
+                                <div className="mb-5">
+                                    <label className={`block text-sm font-medium mb-2 ${textMuted}`}>
+                                        <Lock className="h-4 w-4 inline mr-1" />
+                                        Link Password Required
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showLinkPassword ? 'text' : 'password'}
+                                            value={linkPassword}
+                                            onChange={(e) => {
+                                                setLinkPassword(e.target.value);
+                                                setPassphraseError(null);
+                                            }}
+                                            placeholder="Enter link password..."
+                                            className="input-field text-center text-lg tracking-wide font-mono pr-12"
+                                            autoComplete="off"
+                                            disabled={!!(lockoutUntil && Date.now() < lockoutUntil)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowLinkPassword(!showLinkPassword)}
+                                            className={`absolute right-4 top-1/2 -translate-y-1/2 ${textMuted}`}
+                                        >
+                                            {showLinkPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 onClick={handleDecrypt}
                                 disabled={passphrase.length < 1 || isDecrypting}
@@ -443,8 +485,8 @@ export default function SharedFile() {
                         <p className={`flex items-start gap-1.5 ${textMuted}`}>
                             <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-emerald-500" />
                             <span>
-                                <strong className="text-emerald-500">Secure Backend Decryption.</strong> Access is gated by your secret passphrase. 
-                                Decryption occurs in a secure server environment, and direct file access is strictly prohibited.
+                                <strong className="text-emerald-500">Secure Client-Side Decryption.</strong> Access is gated by your secret passphrase. 
+                                Decryption happens in the browser after encrypted download from secure storage.
                                 Your files remain encrypted at rest using AES-256-GCM.
                             </span>
                         </p>

@@ -3,6 +3,8 @@ import { X, Copy, Check, Link2, QrCode, Clock, Lock, Hash, ExternalLink, Share2,
 import { QRCodeSVG } from 'qrcode.react';
 import { useTheme } from '../context/ThemeContext';
 import { generateShareToken, formatTimeRemaining } from '../utils/crypto';
+import { useToast } from '../context/ToastContext';
+import storageEncryptionService from '../services/storageEncryptionService';
 
 interface ShareFile {
     id: string;
@@ -26,6 +28,7 @@ interface ShareModalProps {
 
 export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRevoke }: ShareModalProps) {
     const { theme } = useTheme();
+    const { addToast } = useToast();
     const isDark = theme === 'dark';
 
     const [shareToken, setShareToken] = useState('');
@@ -42,6 +45,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
     // Link security
     const [linkPassword, setLinkPassword] = useState('');
     const [showLinkPassword, setShowLinkPassword] = useState(false);
+    const [savingLinkPassword, setSavingLinkPassword] = useState(false);
 
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
     const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
@@ -62,8 +66,35 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
             setEmailInput('');
             setEmailSent(false);
             setLinkPassword('');
+            setSavingLinkPassword(false);
         }
     }, [isOpen, file]);
+
+    const handleSaveLinkPassword = async () => {
+        if (!file) return;
+        setSavingLinkPassword(true);
+        try {
+            const result = await storageEncryptionService.setLinkPassword(file.id, linkPassword || null);
+            if (!result.success) {
+                throw result.error || new Error('Failed to save link password');
+            }
+            addToast({
+                type: 'success',
+                title: linkPassword ? 'Link password saved' : 'Link password removed',
+                message: linkPassword
+                    ? 'Recipients must enter this password before decryption.'
+                    : 'Link now works without an additional password.',
+            });
+        } catch (error) {
+            addToast({
+                type: 'error',
+                title: 'Save failed',
+                message: error instanceof Error ? error.message : 'Could not update link password.',
+            });
+        } finally {
+            setSavingLinkPassword(false);
+        }
+    };
 
     const handleCopy = async () => {
         try {
@@ -274,6 +305,14 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
                             <p className={`text-[10px] mt-1 ${textMuted}`}>
                                 Recipients will need both the encryption passphrase AND this link password
                             </p>
+                            <button
+                                type="button"
+                                onClick={handleSaveLinkPassword}
+                                disabled={savingLinkPassword}
+                                className="btn-secondary mt-2 text-xs"
+                            >
+                                {savingLinkPassword ? 'Saving...' : (linkPassword ? 'Save Link Password' : 'Remove Link Password')}
+                            </button>
                         </div>
 
                         {/* Quick Share Buttons */}
