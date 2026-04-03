@@ -239,6 +239,36 @@ export default function Converter({ authContent }: { authContent?: React.ReactNo
                         )}
                     </div>
 
+                    {/* Other Possible Conversion Methods */}
+                    {files.length > 0 && availableConversions.length > 1 && (
+                        <div className="mb-6">
+                            <p className={`text-sm font-medium mb-3 ${textSecondary}`}>Other possible methods</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {availableConversions.map((conversion) => (
+                                    <button
+                                        key={conversion.id}
+                                        type="button"
+                                        onClick={() => setSelectedConversion(conversion)}
+                                        className={`text-left p-3 rounded-xl border transition-all ${selectedConversion?.id === conversion.id
+                                            ? 'border-primary-500 bg-primary-500/10'
+                                            : isDark
+                                                ? 'border-[#334155] bg-[#0F172A]/60 hover:border-primary-500/50'
+                                                : 'border-[#CBD5E1] bg-[#E4F3EC]/40 hover:border-primary-500/50'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <conversion.icon className="h-4 w-4 text-primary-500" />
+                                            <ArrowRight className="h-3.5 w-3.5 text-primary-500" />
+                                            <conversion.toIcon className="h-4 w-4 text-primary-500" />
+                                            <span className={`text-sm font-semibold ${textPrimary}`}>{conversion.label}</span>
+                                        </div>
+                                        <p className={`text-xs ${textMuted}`}>{conversion.description}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Drop Zone */}
                     <div
                         className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all mb-6 ${dragOver

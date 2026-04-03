@@ -1,12 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, RefreshCw, File as FileIcon, Download, Share2, CheckCircle } from 'lucide-react';
+import {
+    Search,
+    RefreshCw,
+    File as FileIcon,
+    Download,
+    Share2,
+    CheckCircle,
+    Link as LinkIcon,
+    Trash2,
+    ShieldCheck,
+    ShieldAlert,
+    AlertTriangle,
+} from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
 import FileEncryptDecrypt from './FileEncryptDecrypt';
 import storageEncryptionService, { StorageFile } from '../services/storageEncryptionService';
 import ShareModal from '../components/ShareModal';
 
 export default function Dashboard() {
     const { theme } = useTheme();
+    const { addToast } = useToast();
     const isDark = theme === 'dark';
 
     const [files, setFiles] = useState<StorageFile[]>([]);
@@ -14,7 +28,18 @@ export default function Dashboard() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showAllFiles, setShowAllFiles] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [shareFile, setShareFile] = useState<{
+        id: string;
+        name: string;
+        hash: string;
+        expiryDate: Date;
+        hasPin: boolean;
+        downloadCount: number;
+        shareToken: string;
+        shareUrl: string;
+    } | null>(null);
     const [latestEncrypted, setLatestEncrypted] = useState<{
         fileId: string;
         encryptedBlob: Blob;
@@ -64,6 +89,17 @@ export default function Dashboard() {
         return files.filter((f) => f.fileName.toLowerCase().includes(query));
     }, [files, searchQuery]);
 
+    const filteredAndSortedFiles = useMemo(() => {
+        return [...filteredFiles].sort(
+            (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+        );
+    }, [filteredFiles]);
+
+    const visibleFiles = useMemo(() => {
+        if (showAllFiles) return filteredAndSortedFiles;
+        return filteredAndSortedFiles.slice(0, 5);
+    }, [filteredAndSortedFiles, showAllFiles]);
+
     const handleManagedEncryptSuccess = async (payload: {
         fileId: string;
         encryptedBlob: Blob;
@@ -93,6 +129,71 @@ export default function Dashboard() {
         a.download = latestEncrypted.encryptedFileName;
         a.click();
         URL.revokeObjectURL(url);
+    };
+
+    const toShareModalFile = (file: StorageFile) => {
+        const shareToken = file.shareToken || '';
+        const shareUrl = file.shareUrl || (shareToken ? storageEncryptionService.getAppShareUrl(shareToken) : '');
+        return {
+            id: file.id,
+            name: file.fileName,
+            hash: file.id.replace(/-/g, '').slice(0, 64).padEnd(64, '0'),
+            expiryDate: file.expiryDate,
+            hasPin: true,
+            downloadCount: file.downloadCount,
+            shareToken,
+            shareUrl,
+        };
+    };
+
+    const openShareModalForFile = (file: StorageFile) => {
+        setShareFile(toShareModalFile(file));
+        setShowShareModal(true);
+    };
+
+    const handleSecureDownload = (file: StorageFile) => {
+        if (!file.shareToken) {
+            addToast({
+                type: 'error',
+                title: 'Missing share link',
+                message: 'This file does not have a valid share token.',
+            });
+            return;
+        }
+
+        const url = file.shareUrl || storageEncryptionService.getAppShareUrl(file.shareToken);
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    const handleDeleteFile = async (file: StorageFile) => {
+        const result = await storageEncryptionService.deleteFile(file.id);
+        if (!result.success) {
+            addToast({
+                type: 'error',
+                title: 'Delete failed',
+                message: result.error?.message || 'Could not delete this file.',
+            });
+            return;
+        }
+
+        addToast({
+            type: 'success',
+            title: 'File deleted',
+            message: `${file.fileName} removed from vault.`,
+        });
+        await loadFiles(true);
+    };
+
+    const getSecurityColor = (score: number) => {
+        if (score > 75) return 'text-red-500 bg-red-500/10 border-red-500/20';
+        if (score > 30) return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+        return 'text-green-500 bg-green-500/10 border-green-500/20';
+    };
+
+    const getSecurityIcon = (status: StorageFile['securityStatus']) => {
+        if (status === 'danger') return <ShieldAlert className="h-4 w-4" />;
+        if (status === 'warning') return <AlertTriangle className="h-4 w-4" />;
+        return <ShieldCheck className="h-4 w-4" />;
     };
 
     return (
@@ -182,7 +283,23 @@ export default function Dashboard() {
                                             <Download className="h-4 w-4 mr-2" />
                                             Download .enc
                                         </button>
-                                        <button onClick={() => setShowShareModal(true)} className="btn-secondary">
+                                        <button
+                                            onClick={() => {
+                                                if (!latestEncrypted) return;
+                                                setShareFile({
+                                                    id: latestEncrypted.fileRecord.id,
+                                                    name: latestEncrypted.fileRecord.fileName,
+                                                    hash: latestEncrypted.fileRecord.hash,
+                                                    expiryDate: latestEncrypted.fileRecord.expiryDate,
+                                                    hasPin: true,
+                                                    downloadCount: latestEncrypted.fileRecord.downloadCount,
+                                                    shareToken: latestEncrypted.fileRecord.shareToken,
+                                                    shareUrl: latestEncrypted.fileRecord.shareUrl,
+                                                });
+                                                setShowShareModal(true);
+                                            }}
+                                            className="btn-secondary"
+                                        >
                                             <Share2 className="h-4 w-4 mr-2" />
                                             Share Link / QR
                                         </button>
@@ -224,44 +341,106 @@ export default function Dashboard() {
                             <div className={`p-10 text-center ${textMuted}`}>Loading files...</div>
                         ) : error ? (
                             <div className="p-6 text-sm text-red-500">{error}</div>
-                        ) : filteredFiles.length === 0 ? (
+                        ) : filteredAndSortedFiles.length === 0 ? (
                             <div className="p-10 text-center">
                                 <FileIcon className={`h-10 w-10 mx-auto mb-3 ${textMuted}`} />
                                 <p className={textMuted}>No uploaded files found.</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className={`border-b ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}>
-                                            <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>File Name</th>
-                                            <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>Size</th>
-                                            <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>Uploaded</th>
-                                            <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>Downloads</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className={`divide-y ${isDark ? 'divide-[#334155]' : 'divide-[#CBD5E1]'}`}>
-                                        {filteredFiles.map((file) => (
-                                            <tr key={file.id} className={isDark ? 'hover:bg-[#1E293B]/50' : 'hover:bg-[#E4F3EC]'}>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-9 h-9 rounded-lg bg-primary-500/20 flex items-center justify-center">
-                                                            <FileIcon className="h-4 w-4 text-primary-500" />
-                                                        </div>
-                                                        <span className={`font-medium ${textPrimary}`}>{file.fileName}</span>
-                                                    </div>
-                                                </td>
-                                                <td className={`px-6 py-4 ${textMuted}`}>
-                                                    {storageEncryptionService.formatFileSize(file.fileSize)}
-                                                </td>
-                                                <td className={`px-6 py-4 ${textMuted}`}>
-                                                    {file.uploadedAt.toLocaleDateString()}
-                                                </td>
-                                                <td className={`px-6 py-4 ${textMuted}`}>{file.downloadCount}</td>
+                            <div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className={`border-b ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}>
+                                                <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>File Name</th>
+                                                <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>Size</th>
+                                                <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>Security</th>
+                                                <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>Sharing</th>
+                                                <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider ${textMuted}`}>Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className={`divide-y ${isDark ? 'divide-[#334155]' : 'divide-[#CBD5E1]'}`}>
+                                            {visibleFiles.map((file) => (
+                                                <tr key={file.id} className={isDark ? 'hover:bg-[#1E293B]/50' : 'hover:bg-[#E4F3EC]'}>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                                                                <FileIcon className="h-5 w-5 text-primary-500" />
+                                                            </div>
+                                                            <div>
+                                                                <p className={`font-medium ${textPrimary}`}>{file.fileName}</p>
+                                                                <p className={`text-xs ${textMuted}`}>Uploaded {file.uploadedAt.toLocaleDateString()}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className={`px-6 py-4 ${textMuted}`}>
+                                                        {storageEncryptionService.formatFileSize(file.fileSize)}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium w-fit ${getSecurityColor(file.maliciousScore)}`}>
+                                                                {getSecurityIcon(file.securityStatus)}
+                                                                {file.securityStatus === 'safe' ? 'Safe' : file.securityStatus === 'warning' ? 'Suspicious' : 'Malicious'}
+                                                            </span>
+                                                            <span className="text-[10px] text-gray-500 ml-1">Threat: {file.maliciousScore}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {file.shareToken ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-500/20 text-primary-500 text-xs font-medium">
+                                                                <LinkIcon className="h-3.5 w-3.5" />
+                                                                Shared
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`text-sm ${textMuted}`}>Not shared</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openShareModalForFile(file)}
+                                                                className={`p-2 rounded-lg transition-colors ${isDark ? 'text-dark-400 hover:text-primary-400 hover:bg-[#334155]' : 'text-[#64748B] hover:text-primary-600 hover:bg-[#E4F3EC]'}`}
+                                                                title="Share"
+                                                            >
+                                                                <LinkIcon className="h-5 w-5" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSecureDownload(file)}
+                                                                className={`p-2 rounded-lg transition-colors ${isDark ? 'text-dark-400 hover:text-dark-200 hover:bg-[#334155]' : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#E4F3EC]'}`}
+                                                                title="Download"
+                                                            >
+                                                                <Download className="h-5 w-5" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteFile(file)}
+                                                                className={`p-2 rounded-lg transition-colors ${isDark ? 'text-dark-400 hover:text-red-400 hover:bg-[#334155]' : 'text-[#64748B] hover:text-red-500 hover:bg-[#E4F3EC]'}`}
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 className="h-5 w-5" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {filteredAndSortedFiles.length > 5 && (
+                                    <div className={`px-6 py-4 border-t text-sm ${isDark ? 'border-[#334155]' : 'border-[#CBD5E1]'}`}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAllFiles((prev) => !prev)}
+                                            className="text-primary-500 hover:text-primary-400 transition-colors font-medium"
+                                        >
+                                            {showAllFiles
+                                                ? 'Show only latest 5 files'
+                                                : `Show more (${filteredAndSortedFiles.length - 5} more files)`}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -270,17 +449,11 @@ export default function Dashboard() {
 
             <ShareModal
                 isOpen={showShareModal}
-                onClose={() => setShowShareModal(false)}
-                file={latestEncrypted ? {
-                    id: latestEncrypted.fileRecord.id,
-                    name: latestEncrypted.fileRecord.fileName,
-                    hash: latestEncrypted.fileRecord.hash,
-                    expiryDate: latestEncrypted.fileRecord.expiryDate,
-                    hasPin: true,
-                    downloadCount: latestEncrypted.fileRecord.downloadCount,
-                    shareToken: latestEncrypted.fileRecord.shareToken,
-                    shareUrl: latestEncrypted.fileRecord.shareUrl,
-                } : null}
+                onClose={() => {
+                    setShowShareModal(false);
+                    setShareFile(null);
+                }}
+                file={shareFile}
             />
         </div>
     );
