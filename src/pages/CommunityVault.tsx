@@ -16,12 +16,17 @@ import {
     Crown,
     ArrowLeft,
     UserMinus,
-    FolderLock
+    FolderLock,
+    Copy,
+    Check,
+    Mail,
+    UserPlus,
+    XCircle
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { communityService, Community, CommunityMember, CommunityFile } from '../services/communityService';
+import { communityService, Community, CommunityMember, CommunityFile, CommunityInvite, CommunityJoinRequest } from '../services/communityService';
 import { generateShareToken } from '../utils/crypto';
 import { canShareFile, canDownloadFile, canManageCommunity } from '../services/authorizationService';
 import UploadModal from '../components/UploadModal';
@@ -61,6 +66,10 @@ export default function CommunityVault() {
     // Leave community
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [leaving, setLeaving] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
+    const [activeInvite, setActiveInvite] = useState<CommunityInvite | null>(null);
+    const [joinRequests, setJoinRequests] = useState<CommunityJoinRequest[]>([]);
 
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
     const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
@@ -69,15 +78,19 @@ export default function CommunityVault() {
         if (!communityId) return;
         setLoading(true);
 
-        const [communityData, membersData, filesData] = await Promise.all([
+        const [communityData, membersData, filesData, inviteData, joinRequestsData] = await Promise.all([
             communityService.getCommunityById(communityId),
             communityService.getCommunityMembers(communityId),
-            communityService.getCommunityFiles(communityId)
+            communityService.getCommunityFiles(communityId),
+            communityService.getLatestActiveInviteForCommunity(communityId),
+            communityService.getCommunityJoinRequests(communityId)
         ]);
 
         if (communityData.data) setCommunity(communityData.data);
         if (membersData.data) setMembers(membersData.data);
         if (filesData.data) setFiles(filesData.data);
+        setActiveInvite(inviteData.data || null);
+        if (joinRequestsData.data) setJoinRequests(joinRequestsData.data);
         setLoading(false);
     };
 
@@ -271,6 +284,131 @@ export default function CommunityVault() {
     };
 
     const isAdmin = user ? community?.creator_id === user.id : false;
+    const pendingJoinRequests = joinRequests.filter((request) => request.status === 'pending');
+
+    const buildInviteLink = (token: string) =>
+        `${window.location.origin}/communities?inviteToken=${encodeURIComponent(token)}`;
+
+    const ensureActiveInvite = async (invitedEmail?: string): Promise<CommunityInvite | null> => {
+        if (!community) return null;
+
+        const now = Date.now();
+        if (activeInvite && activeInvite.is_active && new Date(activeInvite.expires_at).getTime() > now) {
+            return activeInvite;
+        }
+
+        const { data, error } = await communityService.createCommunityInvite(community.id, {
+            invitedEmail,
+            expiresInHours: 72
+        });
+
+        if (error || !data) {
+            addToast({
+                type: 'error',
+                title: 'Invite Creation Failed',
+                message: error?.message || 'Could not create a fresh invite link.',
+            });
+            return null;
+        }
+
+        setActiveInvite(data);
+        return data;
+    };
+
+    const handleCopyInviteLink = async () => {
+        const invite = await ensureActiveInvite();
+        if (!invite) return;
+
+        try {
+            await navigator.clipboard.writeText(buildInviteLink(invite.token));
+            setInviteLinkCopied(true);
+            addToast({
+                type: 'success',
+                title: 'Invite Link Copied',
+                message: 'Share this link with users so they can open the join flow directly.',
+            });
+            setTimeout(() => setInviteLinkCopied(false), 2200);
+        } catch {
+            addToast({
+                type: 'error',
+                title: 'Copy Failed',
+                message: 'Could not copy the invite link. Please copy it manually.',
+            });
+        }
+    };
+
+    const handleSendInviteEmail = () => {
+        if (!community) return;
+        const email = inviteEmail.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!email) {
+            addToast({ type: 'error', title: 'Email Required', message: 'Please enter an email address.' });
+            return;
+        }
+
+        if (!emailRegex.test(email)) {
+            addToast({ type: 'error', title: 'Invalid Email', message: 'Please enter a valid email address.' });
+            return;
+        }
+
+        const sendInvite = async () => {
+            const invite = await ensureActiveInvite(email);
+            if (!invite) return;
+
+            const subject = encodeURIComponent(`Invitation to join ${community.name} on CyberVault`);
+            const body = encodeURIComponent(
+                `Hi,\n\nYou've been invited to join "${community.name}" on CyberVault.\n\nJoin using this secure invite link:\n${buildInviteLink(invite.token)}\n\nIf you don't have the community password, you can use the link to send a join request to the admin.\n\nThanks!`
+            );
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+            addToast({
+                type: 'info',
+                title: 'Email Draft Opened',
+                message: 'Your email app opened with a pre-filled invite message.',
+            });
+            setInviteEmail('');
+        };
+
+        sendInvite();
+    };
+
+    const handleApproveRequest = async (requestId: string) => {
+        const { success, error } = await communityService.approveCommunityJoinRequest(requestId);
+        if (!success) {
+            addToast({
+                type: 'error',
+                title: 'Approval Failed',
+                message: error?.message || 'Could not approve this request.',
+            });
+            return;
+        }
+
+        addToast({
+            type: 'success',
+            title: 'Request Approved',
+            message: 'Member was added to this community.',
+        });
+        loadData();
+    };
+
+    const handleRejectRequest = async (requestId: string) => {
+        const { success, error } = await communityService.rejectCommunityJoinRequest(requestId);
+        if (!success) {
+            addToast({
+                type: 'error',
+                title: 'Rejection Failed',
+                message: error?.message || 'Could not reject this request.',
+            });
+            return;
+        }
+
+        addToast({
+            type: 'info',
+            title: 'Request Rejected',
+            message: 'The join request was rejected.',
+        });
+        loadData();
+    };
 
     if (loading) {
         return (
@@ -383,6 +521,119 @@ export default function CommunityVault() {
                         ))}
                     </div>
                 </div>
+
+                {/* Add Members (Admin) */}
+                {isAdmin && (
+                    <div className="glass-card p-4 sm:p-5 mb-8">
+                        <div className="flex items-center gap-2 mb-4">
+                            <UserPlus className="h-5 w-5 text-primary-500" />
+                            <h3 className={`text-base font-semibold ${textPrimary}`}>Add Members</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className={`rounded-xl border p-4 ${isDark ? 'border-[#334155] bg-[#1E293B]/50' : 'border-[#CBD5E1] bg-[#F9FEFC]'}`}>
+                                <p className={`text-sm font-medium mb-2 ${textPrimary}`}>Invite Link</p>
+                                <p className={`text-xs mb-3 ${textMuted}`}>
+                                    Share this expiring link so users can join directly or send a join request.
+                                </p>
+                                <div className={`text-xs rounded-lg px-3 py-2 mb-3 break-all ${isDark ? 'bg-dark-800 text-dark-300' : 'bg-[#E4F3EC] text-[#334155]'}`}>
+                                    {activeInvite
+                                        ? buildInviteLink(activeInvite.token)
+                                        : 'No active invite yet. Click copy to generate one.'}
+                                </div>
+                                {activeInvite && (
+                                    <p className={`text-[11px] mb-3 ${textMuted}`}>
+                                        Expires: {new Date(activeInvite.expires_at).toLocaleString()}
+                                    </p>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={handleCopyInviteLink}
+                                    className="btn-secondary w-full justify-center"
+                                >
+                                    {inviteLinkCopied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                                    {inviteLinkCopied ? 'Copied' : 'Copy Invite Link'}
+                                </button>
+                            </div>
+
+                            <div className={`rounded-xl border p-4 ${isDark ? 'border-[#334155] bg-[#1E293B]/50' : 'border-[#CBD5E1] bg-[#F9FEFC]'}`}>
+                                <p className={`text-sm font-medium mb-2 ${textPrimary}`}>Invite by Email</p>
+                                <p className={`text-xs mb-3 ${textMuted}`}>
+                                    Enter an email address and open a pre-filled invite request.
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <input
+                                        type="email"
+                                        value={inviteEmail}
+                                        onChange={(e) => setInviteEmail(e.target.value)}
+                                        placeholder="friend@example.com"
+                                        className="input-field py-2.5"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleSendInviteEmail}
+                                        className="btn-primary whitespace-nowrap"
+                                    >
+                                        <Mail className="h-4 w-4 mr-2" />
+                                        Send Invite
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={`rounded-xl border p-4 mt-4 ${isDark ? 'border-[#334155] bg-[#1E293B]/50' : 'border-[#CBD5E1] bg-[#F9FEFC]'}`}>
+                            <div className="flex items-center justify-between gap-2 mb-3">
+                                <p className={`text-sm font-medium ${textPrimary}`}>Pending Join Requests</p>
+                                <span className="px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-500 text-xs font-semibold">
+                                    {pendingJoinRequests.length}
+                                </span>
+                            </div>
+
+                            {pendingJoinRequests.length === 0 ? (
+                                <p className={`text-xs ${textMuted}`}>No pending requests right now.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {pendingJoinRequests.map((request) => (
+                                        <div
+                                            key={request.id}
+                                            className={`rounded-lg p-3 border ${isDark ? 'border-[#334155] bg-dark-800/40' : 'border-[#CBD5E1] bg-white'}`}
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                <div>
+                                                    <p className={`text-sm font-medium ${textPrimary}`}>{request.requester_email}</p>
+                                                    <p className={`text-xs ${textMuted}`}>
+                                                        Requested on {new Date(request.created_at).toLocaleString()}
+                                                    </p>
+                                                    {request.message && (
+                                                        <p className={`text-xs mt-1 ${textMuted}`}>Message: {request.message}</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleApproveRequest(request.id)}
+                                                        className="px-3 py-1.5 rounded-lg bg-green-500/15 text-green-500 hover:bg-green-500/25 text-xs font-medium flex items-center gap-1"
+                                                    >
+                                                        <Check className="h-3.5 w-3.5" />
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRejectRequest(request.id)}
+                                                        className="px-3 py-1.5 rounded-lg bg-red-500/15 text-red-500 hover:bg-red-500/25 text-xs font-medium flex items-center gap-1"
+                                                    >
+                                                        <XCircle className="h-3.5 w-3.5" />
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Upload Section */}
                 <div

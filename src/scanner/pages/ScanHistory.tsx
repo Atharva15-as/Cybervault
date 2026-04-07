@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, History, Trash2, FileSearch, Globe, Shield, AlertTriangle, CheckCircle, XCircle, TrendingUp, Activity } from 'lucide-react';
 import { getScanHistory, getScanStats, deleteScanRecord, clearAllHistory } from '../services/scanDatabase';
 import { ScanHistoryRecord, ScanStats } from '../types';
+import { useAuth } from '../../context/AuthContext';
 import '../styles/scanner.css';
 
 export default function ScanHistory() {
@@ -10,14 +11,15 @@ export default function ScanHistory() {
     const [stats, setStats] = useState<ScanStats | null>(null);
     const [activeFilter, setActiveFilter] = useState<'all' | 'file' | 'url' | 'clean' | 'suspicious' | 'malicious'>('all');
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
 
     const loadData = async () => {
         setLoading(true);
-        const [h, s] = await Promise.all([getScanHistory(100), getScanStats()]);
+        const [h, s] = await Promise.all([getScanHistory(100, user?.id), getScanStats(user?.id)]);
         setRecords(h); setStats(s); setLoading(false);
     };
 
-    useEffect(() => { loadData(); }, []);
+    useEffect(() => { loadData(); }, [user?.id]);
 
     const filtered = records.filter(r => {
         if (activeFilter === 'all') return true;
@@ -32,7 +34,7 @@ export default function ScanHistory() {
 
     const handleClear = async () => {
         if (confirm('Clear all scan history? This cannot be undone.')) {
-            await clearAllHistory(); loadData();
+            await clearAllHistory(user?.id); loadData();
         }
     };
 

@@ -1,8 +1,40 @@
 import { ScanResult, ScanHistoryRecord, ScanStats } from '../types';
 
 const DB_NAME = 'CyberVaultScanner';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'scan_history';
+const GUEST_OWNER_ID = 'guest';
+const MAX_TARGET_LENGTH = 2048;
+
+function normalizeOwnerId(ownerId?: string | null): string {
+    return ownerId?.trim() || GUEST_OWNER_ID;
+}
+
+function isRecordVisibleToOwner(record: ScanHistoryRecord, ownerId?: string | null): boolean {
+    if (ownerId?.trim()) {
+        return record.ownerId === ownerId;
+    }
+
+    // Backward compatibility for old guest records that were saved before ownerId existed.
+    return !record.ownerId || record.ownerId === GUEST_OWNER_ID;
+}
+
+function normalizeScanTarget(value: unknown): string {
+    if (typeof value !== 'string') return '';
+    return value.trim().slice(0, MAX_TARGET_LENGTH);
+}
+
+function isValidScanRecord(record: ScanHistoryRecord): boolean {
+    return (
+        typeof record.id === 'string' &&
+        (record.type === 'file' || record.type === 'url') &&
+        normalizeScanTarget(record.target).length > 0 &&
+        Number.isFinite(record.timestamp) &&
+        Number.isFinite(record.threatScore) &&
+        Number.isFinite(record.detectionCount) &&
+        Number.isFinite(record.totalEngines)
+    );
+}
 
 function openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -16,14 +48,25 @@ function openDB(): Promise<IDBDatabase> {
                 store.createIndex('timestamp', 'timestamp', { unique: false });
                 store.createIndex('type', 'type', { unique: false });
                 store.createIndex('verdict', 'verdict', { unique: false });
+                store.createIndex('ownerId', 'ownerId', { unique: false });
+            } else {
+                const tx = (e.target as IDBOpenDBRequest).transaction;
+                const store = tx?.objectStore(STORE_NAME);
+                if (store && !store.indexNames.contains('ownerId')) {
+                    store.createIndex('ownerId', 'ownerId', { unique: false });
+                }
             }
         };
     });
 }
 
-export async function saveScanResult(result: ScanResult): Promise<void> {
+export async function saveScanResult(result: ScanResult, ownerId?: string | null): Promise<void> {
+    const target = normalizeScanTarget(result.target);
+    if (!target) return;
+
     const record: ScanHistoryRecord = {
-        id: result.id, type: result.type, target: result.target,
+        ownerId: normalizeOwnerId(ownerId),
+        id: result.id, type: result.type, target,
         timestamp: result.timestamp, threatScore: result.threatScore,
         verdict: result.verdict, detectionCount: result.detectionCount,
         totalEngines: result.totalEngines, fileSize: result.fileSize,
@@ -38,7 +81,7 @@ export async function saveScanResult(result: ScanResult): Promise<void> {
     });
 }
 
-export async function getScanHistory(limit = 50): Promise<ScanHistoryRecord[]> {
+export async function getScanHistory(limit = 50, ownerId?: string | null): Promise<ScanHistoryRecord[]> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readonly');
@@ -48,8 +91,17 @@ export async function getScanHistory(limit = 50): Promise<ScanHistoryRecord[]> {
         const results: ScanHistoryRecord[] = [];
         req.onsuccess = () => {
             const cursor = req.result;
-            if (cursor && results.length < limit) {
-                results.push(cursor.value);
+            if (cursor) {
+                const record = cursor.value as ScanHistoryRecord;
+                if (!isValidScanRecord(record)) {
+                    cursor.continue();
+                    return;
+                }
+                record.target = normalizeScanTarget(record.target);
+
+                if (isRecordVisibleToOwner(record, ownerId) && results.length < limit) {
+                    results.push(record);
+                }
                 cursor.continue();
             } else {
                 resolve(results);
@@ -59,8 +111,8 @@ export async function getScanHistory(limit = 50): Promise<ScanHistoryRecord[]> {
     });
 }
 
-export async function getScanStats(): Promise<ScanStats> {
-    const records = await getScanHistory(1000);
+export async function getScanStats(ownerId?: string | null): Promise<ScanStats> {
+    const records = await getScanHistory(1000, ownerId);
     const totalScans = records.length;
     const fileScans = records.filter(r => r.type === 'file').length;
     const urlScans = records.filter(r => r.type === 'url').length;
@@ -99,11 +151,15 @@ export async function deleteScanRecord(id: string): Promise<void> {
     });
 }
 
-export async function clearAllHistory(): Promise<void> {
+export async function clearAllHistory(ownerId?: string | null): Promise<void> {
     const db = await openDB();
+    const records = await getScanHistory(10000, ownerId);
     return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).clear();
+        const store = tx.objectStore(STORE_NAME);
+        records.forEach(record => {
+            store.delete(record.id);
+        });
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
     });

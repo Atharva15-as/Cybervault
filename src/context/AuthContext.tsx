@@ -16,7 +16,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const IS_DEMO_MODE = false; // Disable Demo Mode to use real Supabase auth
 const SESSION_START_KEY = 'cybervault_session_started_at';
 const SESSION_DURATION_KEY = 'cybervault_session_max_age_ms';
 const SESSION_PENDING_DURATION_KEY = 'cybervault_session_pending_max_age_ms';
@@ -80,18 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
-        if (IS_DEMO_MODE) {
-            // Check for mock session in keys
-            const storedSession = localStorage.getItem('cybervault_demo_session');
-            if (storedSession) {
-                const sessionData = JSON.parse(storedSession);
-                setUser(sessionData.user);
-                setSession(sessionData);
-            }
-            setLoading(false);
-            return;
-        }
-
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
@@ -160,41 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => clearInterval(interval);
     }, [user]);
 
-    const mockLogin = () => {
-        const mockUser: any = {
-            id: 'demo-user-123',
-            aud: 'authenticated',
-            role: 'authenticated',
-            email: 'demo@cybervault.com',
-            email_confirmed_at: new Date().toISOString(),
-            user_metadata: {
-                full_name: 'Demo User',
-            },
-            app_metadata: {
-                provider: 'google'
-            },
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        };
-
-        const mockSession: any = {
-            access_token: 'mock-token',
-            token_type: 'bearer',
-            expires_in: 3600,
-            refresh_token: 'mock-refresh',
-            user: mockUser,
-            expires_at: Date.now() + 3600000,
-        };
-
-        setUser(mockUser);
-        setSession(mockSession);
-        localStorage.setItem('cybervault_demo_session', JSON.stringify(mockSession));
-        return { error: null };
-    };
-
     const handleOAuthSignIn = async (provider: 'google' | 'github') => {
-        if (IS_DEMO_MODE) return mockLogin();
-
         // Detect if we are running inside an iframe (like a preview environment)
         const isIframe = window !== window.top;
 
@@ -225,7 +178,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signIn = async (email: string, password: string, rememberMe = false) => {
-        if (IS_DEMO_MODE) return mockLogin();
         setSessionDurationPreference(rememberMe);
 
         const { error } = await supabase.auth.signInWithPassword({
@@ -236,8 +188,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signUp = async (email: string, password: string, name?: string) => {
-        if (IS_DEMO_MODE) return mockLogin();
-
         const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -251,22 +201,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signOut = async () => {
-        if (IS_DEMO_MODE) {
-            setUser(null);
-            setSession(null);
-            localStorage.removeItem('cybervault_demo_session');
-            clearSessionStart();
-            clearSessionDuration();
-            return;
-        }
         clearSessionStart();
         clearSessionDuration();
         await supabase.auth.signOut();
     };
 
     const resetPassword = async (email: string) => {
-        if (IS_DEMO_MODE) return { error: null };
-
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
         });

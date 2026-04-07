@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, Activity, LayoutDashboard, LogOut, Users } from 'lucide-react';
+import { Menu, X, ChevronDown, Activity, LayoutDashboard, LogOut, Users, ShieldAlert } from 'lucide-react';
 import Logo from './Logo';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,7 @@ const navLinks = [
 
 const userMenuItems = [
     { name: 'My Activity', path: '/activity', icon: Activity },
+    { name: 'SIEM Tool', path: '/siem', icon: ShieldAlert },
     { name: 'Community', path: '/communities', icon: Users },
 ];
 

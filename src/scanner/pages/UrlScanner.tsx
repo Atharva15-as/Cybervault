@@ -5,6 +5,7 @@ import DetectionRing from '../components/DetectionRing';
 import { analyzeUrl } from '../services/urlAnalyzer';
 import { saveScanResult } from '../services/scanDatabase';
 import { ScanResult } from '../types';
+import { useAuth } from '../../context/AuthContext';
 import '../styles/scanner.css';
 
 export default function UrlScanner() {
@@ -14,6 +15,7 @@ export default function UrlScanner() {
     const [stage, setStage] = useState('');
     const [result, setResult] = useState<ScanResult | null>(null);
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({ analysis: true, patterns: true, engines: true });
+    const { user } = useAuth();
 
     const toggleSection = (k: string) => setExpandedSections(p => ({ ...p, [k]: !p[k] }));
 
@@ -21,9 +23,9 @@ export default function UrlScanner() {
         if (!url.trim()) return;
         setScanning(true); setResult(null); setProgress(0);
         try {
-            const res = await analyzeUrl(url.trim(), (s, p) => { setStage(s); setProgress(p); });
+            const res = await analyzeUrl(url.trim(), (s, p) => { setStage(s); setProgress(p); }, user?.id);
             setResult(res);
-            await saveScanResult(res);
+            await saveScanResult(res, user?.id);
         } catch (err) { console.error(err); }
         setScanning(false);
     };
@@ -116,12 +118,83 @@ export default function UrlScanner() {
                                         { label: 'TLD', value: result.urlAnalysis.tld, color: result.urlAnalysis.isSuspiciousTld ? 'var(--neon-yellow)' : 'var(--neon-green)' },
                                         { label: 'Protocol', value: result.urlAnalysis.protocol, color: result.urlAnalysis.protocol === 'http:' ? 'var(--neon-yellow)' : 'var(--neon-green)' },
                                         { label: 'URL Length', value: `${result.urlAnalysis.urlLength} chars`, color: result.urlAnalysis.urlLength > 200 ? 'var(--neon-yellow)' : 'var(--cyber-text)' },
+                                        {
+                                            label: 'WWW Existence',
+                                            value: result.urlAnalysis.webExistenceStatus === 'exists'
+                                                ? 'Exists on web'
+                                                : result.urlAnalysis.webExistenceStatus === 'not_found'
+                                                    ? 'Not reachable'
+                                                    : 'Unknown',
+                                            color: result.urlAnalysis.webExistenceStatus === 'exists'
+                                                ? 'var(--neon-green)'
+                                                : result.urlAnalysis.webExistenceStatus === 'not_found'
+                                                    ? 'var(--neon-red)'
+                                                    : 'var(--neon-yellow)',
+                                        },
                                     ].map((item, i) => (
                                         <div key={i} style={{ padding: 12, background: 'rgba(10,10,18,0.5)', borderRadius: 8, border: '1px solid var(--cyber-border)' }}>
                                             <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--cyber-muted)', letterSpacing: 1, marginBottom: 4 }}>{item.label}</div>
                                             <div style={{ fontSize: '0.9rem', fontWeight: 600, color: item.color, wordBreak: 'break-all' }}>{item.value}</div>
                                         </div>
                                     ))}
+                                </div>
+                                <div style={{ marginBottom: 16, padding: '10px 12px', background: 'rgba(10,10,18,0.4)', border: '1px solid var(--cyber-border)', borderRadius: 8 }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--cyber-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Safety Overview</div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--cyber-text)', lineHeight: 1.6 }}>{result.urlAnalysis.overview}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--cyber-muted)', marginTop: 6 }}>{result.urlAnalysis.webExistenceNote}</div>
+                                    <div style={{ marginTop: 10 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                            <span style={{ fontSize: '0.7rem', color: 'var(--cyber-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Confidence</span>
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: 700,
+                                                color: result.urlAnalysis.overviewConfidence >= 75
+                                                    ? 'var(--neon-green)'
+                                                    : result.urlAnalysis.overviewConfidence >= 55
+                                                        ? 'var(--neon-yellow)'
+                                                        : 'var(--neon-red)'
+                                            }}>
+                                                {result.urlAnalysis.overviewConfidence}%
+                                            </span>
+                                        </div>
+                                        <div style={{ height: 7, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                                            <div
+                                                style={{
+                                                    width: `${result.urlAnalysis.overviewConfidence}%`,
+                                                    height: '100%',
+                                                    borderRadius: 999,
+                                                    transition: 'width 0.4s ease',
+                                                    background: result.urlAnalysis.overviewConfidence >= 75
+                                                        ? 'linear-gradient(90deg, #00ff9d, #00ffd5)'
+                                                        : result.urlAnalysis.overviewConfidence >= 55
+                                                            ? 'linear-gradient(90deg, #ffd54a, #ffb347)'
+                                                            : 'linear-gradient(90deg, #ff5f6d, #ff2e63)',
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{ marginBottom: 12 }}>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--cyber-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+                                        Related Matches In Your Uploaded Links ({result.urlAnalysis.relatedMatches.length})
+                                    </div>
+                                    {result.urlAnalysis.relatedMatches.length === 0 ? (
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--cyber-muted)' }}>No related links found in your previous scans.</div>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                            {result.urlAnalysis.relatedMatches.slice(0, 6).map((match) => (
+                                                <div key={match.id} style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid var(--cyber-border)', background: 'rgba(10,10,18,0.35)' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                                                        <div style={{ fontSize: '0.8rem', color: 'var(--cyber-text)', wordBreak: 'break-all' }}>{match.target}</div>
+                                                        <span className={`threat-badge threat-badge-${match.verdict}`} style={{ fontSize: '0.6rem', whiteSpace: 'nowrap' }}>{match.verdict}</span>
+                                                    </div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--cyber-muted)', marginTop: 4 }}>
+                                                        Match: {match.matchType.replace('_', ' ')} • Score: {match.threatScore} • {new Date(match.timestamp).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 {/* Flags */}
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

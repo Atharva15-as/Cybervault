@@ -58,10 +58,22 @@ export interface URLAnalysis {
     tld: string;
     path: string;
     protocol: string;
+    webExistenceStatus: 'exists' | 'not_found' | 'unknown';
+    webExistenceNote: string;
     isMaliciousDomain: boolean;
     isSuspiciousTld: boolean;
     phishingBrand: string | null;
     suspiciousPatterns: { pattern: string; description: string; severity: string }[];
+    relatedMatches: {
+        id: string;
+        target: string;
+        timestamp: number;
+        verdict: 'clean' | 'suspicious' | 'malicious';
+        threatScore: number;
+        matchType: 'exact_url' | 'same_domain' | 'related_domain';
+    }[];
+    overview: string;
+    overviewConfidence: number;
     ipInUrl: boolean;
     excessiveSubdomains: boolean;
     urlLength: number;
@@ -96,6 +108,7 @@ export interface ScanResult {
 
 export interface ScanHistoryRecord {
     id: string;
+    ownerId?: string;
     type: 'file' | 'url';
     target: string;
     timestamp: number;

@@ -6,6 +6,16 @@ import { formatTimeRemaining } from '../utils/crypto';
 import { supabase } from '../lib/supabase';
 import storageEncryptionService from '../services/storageEncryptionService';
 
+interface ConfidentialAccessState {
+    enabled: boolean;
+    maxAccessDays: number;
+    websiteOnlyDecrypt: boolean;
+    accessStartedAt: string | null;
+    screenshotAttempts: number;
+    destroyedAt: string | null;
+    recipientHint: string | null;
+}
+
 // Interface for shared file data
 interface SharedFileData {
     id: string;
@@ -19,21 +29,8 @@ interface SharedFileData {
     encryptedHash?: string;
     storagePath?: string;
     linkPasswordHash?: string | null;
+    confidentialPolicy?: ConfidentialAccessState | null;
 }
-
-// Mock shared file data - fallback for demo when database is empty
-const mockSharedFiles: { [key: string]: SharedFileData } = {
-    'demo123': {
-        id: '1',
-        name: 'Financial_Report_2024.pdf',
-        size: '2.4 MB',
-        hash: 'a3f2c8d1e4b5a6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1',
-        pinHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4',
-        expiryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-        uploadDate: '2024-01-15',
-        downloadCount: 0,
-    }
-};
 
 export default function SharedFile() {
     const { token } = useParams<{ token: string }>();
@@ -55,6 +52,9 @@ export default function SharedFile() {
     const [decryptPercent, setDecryptPercent] = useState(0);
     const [decryptedFile, setDecryptedFile] = useState<{ blob: Blob; fileName: string; fileSize: number } | null>(null);
     const [integrityStatus, setIntegrityStatus] = useState<'pending' | 'verified' | 'failed'>('pending');
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewText, setPreviewText] = useState<string | null>(null);
+    const [securityAlerts, setSecurityAlerts] = useState(0);
 
     // Brute-force protection
     const [pinAttempts, setPinAttempts] = useState(0);
@@ -64,6 +64,14 @@ export default function SharedFile() {
 
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
     const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
+    const isConfidential = fileData?.confidentialPolicy?.enabled === true;
+
+    const getConfidentialEndDate = (policy?: ConfidentialAccessState | null): Date | null => {
+        if (!policy?.enabled || !policy.accessStartedAt) return null;
+        const startMs = new Date(policy.accessStartedAt).getTime();
+        const endMs = startMs + policy.maxAccessDays * 24 * 60 * 60 * 1000;
+        return new Date(endMs);
+    };
 
     useEffect(() => {
         const fetchFileData = async () => {
@@ -85,15 +93,13 @@ export default function SharedFile() {
                     .single();
 
                 if (dbError || !fileRecord) {
-                    // Check mock data as fallback
-                    if (mockSharedFiles[token]) {
-                        setFileData(mockSharedFiles[token]);
-                    } else {
-                        setError('File not found or link expired');
-                    }
+                    setError('File not found or link expired');
                 } else {
-                    // Check expiry
-                    if (new Date(fileRecord.expiry_date) < new Date()) {
+                    const { policy } = storageEncryptionService.parseSharedMetadata(fileRecord.encrypted_metadata);
+
+                    if (policy?.enabled && policy.destroyedAt) {
+                        setError('This confidential file has been destroyed due to security policy violations');
+                    } else if (!policy?.enabled && new Date(fileRecord.expiry_date) < new Date()) {
                         setError('This share link has expired');
                     } else {
                         setFileData({
@@ -108,6 +114,17 @@ export default function SharedFile() {
                             encryptedHash: fileRecord.encrypted_hash,
                             storagePath: fileRecord.storage_path,
                             linkPasswordHash: fileRecord.link_password_hash,
+                            confidentialPolicy: policy
+                                ? {
+                                    enabled: true,
+                                    maxAccessDays: policy.maxAccessDays,
+                                    websiteOnlyDecrypt: true,
+                                    accessStartedAt: policy.accessStartedAt,
+                                    screenshotAttempts: policy.screenshotAttempts,
+                                    destroyedAt: policy.destroyedAt,
+                                    recipientHint: policy.recipientHint,
+                                }
+                                : null,
                         });
                     }
                 }
@@ -121,6 +138,63 @@ export default function SharedFile() {
 
         fetchFileData();
     }, [token]);
+
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
+    useEffect(() => {
+        if (!token || !decryptedFile || !isConfidential) return;
+
+        let handling = false;
+        const signalEvent = async (reason: 'printscreen' | 'devtools' | 'visibility_change') => {
+            if (handling) return;
+            handling = true;
+            const result = await storageEncryptionService.registerConfidentialSecurityEvent(token, reason);
+            handling = false;
+
+            if (!result.success) return;
+
+            setSecurityAlerts(result.attempts);
+            if (result.destroyed) {
+                setError('Confidential file destroyed after repeated capture attempts.');
+                setDecryptedFile(null);
+                setPreviewText(null);
+                if (previewUrl) URL.revokeObjectURL(previewUrl);
+                setPreviewUrl(null);
+                return;
+            }
+            setPassphraseError(`Security warning: capture attempt detected (${result.attempts}/3).`);
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            const key = e.key.toLowerCase();
+            if (key === 'printscreen' || (e.ctrlKey && key === 'p') || (e.metaKey && e.shiftKey && (key === '3' || key === '4'))) {
+                e.preventDefault();
+                signalEvent('printscreen');
+            }
+            if ((e.ctrlKey && e.shiftKey && key === 'i') || e.key === 'F12') {
+                signalEvent('devtools');
+            }
+        };
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                signalEvent('visibility_change');
+            }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+    }, [token, decryptedFile, isConfidential, previewUrl]);
 
     const handlePassphraseChange = (value: string) => {
         setPassphrase(value);
@@ -200,10 +274,44 @@ export default function SharedFile() {
                 fileSize: result.blob.size,
             });
 
+            const confidentialPolicy = result.confidentialPolicy;
+
+            if (confidentialPolicy?.enabled) {
+                const lowerName = result.fileName.toLowerCase();
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                }
+                setPreviewUrl(URL.createObjectURL(result.blob));
+
+                if (/\.(txt|md|csv|json|log)$/i.test(lowerName)) {
+                    const text = await result.blob.text();
+                    setPreviewText(text.slice(0, 120000));
+                } else {
+                    setPreviewText(null);
+                }
+            } else {
+                setPreviewText(null);
+            }
+
             setDecryptPercent(100);
             setDecryptProgress('File ready!');
             setIntegrityStatus('verified');
             setPinAttempts(0);
+
+            if (confidentialPolicy?.enabled) {
+                setFileData((prev) => prev ? {
+                    ...prev,
+                    confidentialPolicy: {
+                        enabled: true,
+                        maxAccessDays: confidentialPolicy.maxAccessDays,
+                        websiteOnlyDecrypt: true,
+                        accessStartedAt: confidentialPolicy.accessStartedAt,
+                        screenshotAttempts: confidentialPolicy.screenshotAttempts,
+                        destroyedAt: confidentialPolicy.destroyedAt,
+                        recipientHint: confidentialPolicy.recipientHint,
+                    }
+                } : prev);
+            }
 
         } catch (err) {
             const newAttempts = pinAttempts + 1;
@@ -240,6 +348,12 @@ export default function SharedFile() {
         setPassphrase('');
         setIntegrityStatus('pending');
         setDecryptPercent(0);
+        setPreviewText(null);
+        setSecurityAlerts(0);
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
     };
 
     // Loading state
@@ -277,7 +391,10 @@ export default function SharedFile() {
 
     // Success - file found
     if (fileData) {
-        const timeRemaining = formatTimeRemaining(fileData.expiryDate);
+        const confidentialEndDate = getConfidentialEndDate(fileData.confidentialPolicy);
+        const timeRemaining = fileData.confidentialPolicy?.enabled
+            ? (confidentialEndDate ? formatTimeRemaining(confidentialEndDate) : 'Starts on first authorized open')
+            : formatTimeRemaining(fileData.expiryDate);
 
         return (
             <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
@@ -309,12 +426,18 @@ export default function SharedFile() {
                             </span>
                             <span className={`flex items-center gap-1 ${timeRemaining === 'Expired' ? 'text-red-500' : 'text-green-500'}`}>
                                 <Clock className="h-3 w-3" />
-                                {timeRemaining === 'Expired' ? 'Expired' : `${timeRemaining} left`}
+                                {timeRemaining === 'Expired' ? 'Expired' : `${timeRemaining}${fileData.confidentialPolicy?.enabled ? ' (access window)' : ' left'}`}
                             </span>
                             <span className={`flex items-center gap-1 ${textMuted}`}>
                                 <Download className="h-3 w-3" />
                                 {fileData.downloadCount} downloads
                             </span>
+                            {fileData.confidentialPolicy?.enabled && (
+                                <span className="flex items-center gap-1 text-primary-500">
+                                    <Shield className="h-3 w-3" />
+                                    Confidential Read-Only
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -459,14 +582,34 @@ export default function SharedFile() {
                                 </div>
                             </div>
 
-                            {/* Download Button */}
-                            <button
-                                onClick={handleDownload}
-                                className="btn-primary w-full justify-center mb-3"
-                            >
-                                <Download className="h-5 w-5 mr-2" />
-                                Download {decryptedFile.fileName}
-                            </button>
+                            {fileData.confidentialPolicy?.enabled ? (
+                                <div className={`mb-3 p-3 rounded-xl border ${isDark ? 'bg-primary-500/10 border-primary-500/30' : 'bg-primary-50 border-primary-200'}`}>
+                                    <p className={`text-xs mb-2 ${textMuted}`}>
+                                        Website-only view mode is active. Download is disabled for this confidential file.
+                                    </p>
+                                    {previewText ? (
+                                        <pre className={`text-xs max-h-56 overflow-auto whitespace-pre-wrap p-2 rounded-lg ${isDark ? 'bg-[#0F172A] text-slate-200' : 'bg-white text-[#0F172A]'}`}>
+                                            {previewText}
+                                        </pre>
+                                    ) : previewUrl && /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(decryptedFile.fileName) ? (
+                                        <img src={previewUrl} alt="Confidential preview" className="max-h-72 mx-auto rounded-lg" />
+                                    ) : previewUrl && /\.pdf$/i.test(decryptedFile.fileName) ? (
+                                        <iframe src={previewUrl} title="Confidential PDF preview" className="w-full h-72 rounded-lg border border-primary-500/20" />
+                                    ) : (
+                                        <p className={`text-xs ${textMuted}`}>
+                                            Preview unavailable for this file format. Sender should share viewable format (txt, csv, json, image, or pdf).
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleDownload}
+                                    className="btn-primary w-full justify-center mb-3"
+                                >
+                                    <Download className="h-5 w-5 mr-2" />
+                                    Download {decryptedFile.fileName}
+                                </button>
+                            )}
 
                             <button
                                 onClick={handleReset}
@@ -490,6 +633,11 @@ export default function SharedFile() {
                                 Your files remain encrypted at rest using AES-256-GCM.
                             </span>
                         </p>
+                        {fileData.confidentialPolicy?.enabled && (
+                            <p className={`mt-2 ${textMuted}`}>
+                                Confidential policy: timer starts on first authorized access, read-only on this website, and 3 suspicious capture events trigger auto-destruction. Current alerts: {securityAlerts || fileData.confidentialPolicy.screenshotAttempts}/3.
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

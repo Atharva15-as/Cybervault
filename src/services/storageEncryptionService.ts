@@ -13,6 +13,9 @@ export interface UploadOptions {
     expiryDuration?: '1h' | '24h' | '7d' | '30d';
     maxDownloads?: number;
     linkPassword?: string;
+    confidentialMode?: boolean;
+    confidentialAccessDays?: number;
+    authorizedRecipientEmail?: string;
 }
 
 export interface DownloadOptions {
@@ -41,6 +44,21 @@ export interface UploadedFileRecord {
     downloadCount: number;
     shareToken: string;
     shareUrl: string;
+}
+
+export interface ConfidentialPolicy {
+    enabled: boolean;
+    maxAccessDays: number;
+    websiteOnlyDecrypt: boolean;
+    authorizedRecipientHash: string | null;
+    recipientHint: string | null;
+    accessStartedAt: string | null;
+    screenshotAttempts: number;
+    destroyedAt: string | null;
+}
+
+interface SharedFileMetadataEnvelope {
+    confidentialPolicy?: ConfidentialPolicy;
 }
 
 const PRIMARY_STORAGE_BUCKET = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET || 'user_files';
@@ -201,6 +219,28 @@ export const storageEncryptionService = {
                 linkPasswordHash = await this.hashPassword(options.linkPassword);
             }
 
+            const confidentialMode = options.confidentialMode === true;
+            const confidentialAccessDays = Math.min(10, Math.max(1, options.confidentialAccessDays || 1));
+            const normalizedRecipientEmail = options.authorizedRecipientEmail?.trim().toLowerCase() || '';
+            const authorizedRecipientHash = confidentialMode && normalizedRecipientEmail
+                ? await this.hashPassword(normalizedRecipientEmail)
+                : null;
+            const confidentialPolicy: ConfidentialPolicy | undefined = confidentialMode
+                ? {
+                    enabled: true,
+                    maxAccessDays: confidentialAccessDays,
+                    websiteOnlyDecrypt: true,
+                    authorizedRecipientHash,
+                    recipientHint: normalizedRecipientEmail || null,
+                    accessStartedAt: null,
+                    screenshotAttempts: 0,
+                    destroyedAt: null,
+                }
+                : undefined;
+            const metadataEnvelope: SharedFileMetadataEnvelope = confidentialPolicy
+                ? { confidentialPolicy }
+                : {};
+
             // Create database record with RLS protection
             const { data: fileRecord, error: dbError } = await supabase
                 .from('shared_files')
@@ -218,6 +258,7 @@ export const storageEncryptionService = {
                     expiry_duration: expiryDuration,
                     max_downloads: options.maxDownloads || 0,
                     link_password_hash: linkPasswordHash,
+                    encrypted_metadata: JSON.stringify(metadataEnvelope),
                     security_status: 'safe',
                     malicious_score: 0,
                 })
@@ -279,6 +320,7 @@ export const storageEncryptionService = {
         blob?: Blob;
         fileName?: string;
         originalHash?: string;
+        confidentialPolicy?: ConfidentialPolicy | null;
         error?: Error;
     }> {
         try {
@@ -294,6 +336,69 @@ export const storageEncryptionService = {
 
             if (dbError || !fileRecord) {
                 throw new Error('File not found or has been deactivated');
+            }
+
+            const { policy: confidentialPolicy, metadata } = this.parseSharedMetadata(fileRecord.encrypted_metadata);
+            const isConfidential = confidentialPolicy?.enabled === true;
+            let effectiveConfidentialPolicy = confidentialPolicy;
+
+            if (isConfidential) {
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (!user || !user.email) {
+                    throw new Error('Login is required to access this confidential file');
+                }
+
+                const normalizedEmail = user.email.trim().toLowerCase();
+                const emailHash = await this.hashPassword(normalizedEmail);
+
+                if (confidentialPolicy?.authorizedRecipientHash && confidentialPolicy.authorizedRecipientHash !== emailHash) {
+                    throw new Error('You are not an authorized recipient for this confidential file');
+                }
+
+                if (confidentialPolicy?.destroyedAt) {
+                    throw new Error('This confidential file has been destroyed due to policy violations');
+                }
+
+                const now = Date.now();
+                let shouldPersistPolicy = false;
+                const updatedPolicy: ConfidentialPolicy = {
+                    enabled: true,
+                    maxAccessDays: Math.min(10, Math.max(1, confidentialPolicy?.maxAccessDays || 1)),
+                    websiteOnlyDecrypt: true,
+                    authorizedRecipientHash: confidentialPolicy?.authorizedRecipientHash || null,
+                    recipientHint: confidentialPolicy?.recipientHint || null,
+                    accessStartedAt: confidentialPolicy?.accessStartedAt || null,
+                    screenshotAttempts: confidentialPolicy?.screenshotAttempts || 0,
+                    destroyedAt: confidentialPolicy?.destroyedAt || null,
+                };
+
+                if (!updatedPolicy.accessStartedAt) {
+                    updatedPolicy.accessStartedAt = new Date(now).toISOString();
+                    shouldPersistPolicy = true;
+                }
+
+                const accessStartMs = new Date(updatedPolicy.accessStartedAt).getTime();
+                const accessEndMs = accessStartMs + (updatedPolicy.maxAccessDays * 24 * 60 * 60 * 1000);
+                if (now > accessEndMs) {
+                    await supabase
+                        .from('shared_files')
+                        .update({ is_active: false })
+                        .eq('id', fileRecord.id);
+                    throw new Error('Confidential access window has expired');
+                }
+
+                if (shouldPersistPolicy) {
+                    const updatedMetadata: SharedFileMetadataEnvelope = { ...metadata, confidentialPolicy: updatedPolicy };
+                    await supabase
+                        .from('shared_files')
+                        .update({
+                            encrypted_metadata: JSON.stringify(updatedMetadata),
+                            last_accessed: new Date().toISOString(),
+                        })
+                        .eq('id', fileRecord.id);
+                }
+                effectiveConfidentialPolicy = updatedPolicy;
             }
 
             // Check expiry
@@ -348,6 +453,7 @@ export const storageEncryptionService = {
                 blob: decrypted.blob,
                 fileName: decrypted.fileName,
                 originalHash: decrypted.originalHash,
+                confidentialPolicy: effectiveConfidentialPolicy || null,
             };
         } catch (error) {
             console.error('Download error:', error);
@@ -514,6 +620,99 @@ export const storageEncryptionService = {
             return {
                 success: false,
                 error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
+    parseSharedMetadata(raw: string | null | undefined): {
+        policy: ConfidentialPolicy | null;
+        metadata: SharedFileMetadataEnvelope;
+    } {
+        if (!raw) return { policy: null, metadata: {} };
+        try {
+            const parsed = JSON.parse(raw) as SharedFileMetadataEnvelope;
+            const policy = parsed?.confidentialPolicy;
+            if (!policy || policy.enabled !== true) {
+                return { policy: null, metadata: parsed || {} };
+            }
+            return {
+                policy: {
+                    enabled: true,
+                    maxAccessDays: Math.min(10, Math.max(1, policy.maxAccessDays || 1)),
+                    websiteOnlyDecrypt: true,
+                    authorizedRecipientHash: policy.authorizedRecipientHash || null,
+                    recipientHint: policy.recipientHint || null,
+                    accessStartedAt: policy.accessStartedAt || null,
+                    screenshotAttempts: policy.screenshotAttempts || 0,
+                    destroyedAt: policy.destroyedAt || null,
+                },
+                metadata: parsed || {},
+            };
+        } catch {
+            return { policy: null, metadata: {} };
+        }
+    },
+
+    async registerConfidentialSecurityEvent(
+        shareToken: string,
+        reason: 'printscreen' | 'devtools' | 'visibility_change'
+    ): Promise<{
+        success: boolean;
+        attempts: number;
+        destroyed: boolean;
+        error?: Error;
+    }> {
+        try {
+            const { data: record, error } = await supabase
+                .from('shared_files')
+                .select('id, encrypted_metadata')
+                .eq('share_token', shareToken)
+                .eq('is_active', true)
+                .single();
+
+            if (error || !record) {
+                throw new Error('File not found');
+            }
+
+            const { policy, metadata } = this.parseSharedMetadata(record.encrypted_metadata);
+            if (!policy || !policy.enabled) {
+                return { success: true, attempts: 0, destroyed: false };
+            }
+
+            const updatedPolicy: ConfidentialPolicy = {
+                ...policy,
+                screenshotAttempts: (policy.screenshotAttempts || 0) + 1,
+            };
+
+            const shouldDestroy = updatedPolicy.screenshotAttempts >= 3;
+            if (shouldDestroy) {
+                updatedPolicy.destroyedAt = new Date().toISOString();
+            }
+
+            const updatedMetadata: SharedFileMetadataEnvelope = { ...metadata, confidentialPolicy: updatedPolicy };
+            const updatePayload: Record<string, unknown> = {
+                encrypted_metadata: JSON.stringify(updatedMetadata),
+                last_accessed: new Date().toISOString(),
+            };
+            if (shouldDestroy) updatePayload.is_active = false;
+
+            await supabase
+                .from('shared_files')
+                .update(updatePayload)
+                .eq('id', record.id);
+
+            console.warn('[CONFIDENTIAL_EVENT]', reason, 'attempts:', updatedPolicy.screenshotAttempts);
+            return {
+                success: true,
+                attempts: updatedPolicy.screenshotAttempts,
+                destroyed: shouldDestroy,
+            };
+        } catch (err) {
+            return {
+                success: false,
+                attempts: 0,
+                destroyed: false,
+                error: err instanceof Error ? err : new Error(String(err)),
             };
         }
     },

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Users,
     Plus,
@@ -251,11 +251,13 @@ function JoinCommunityModal({
     isOpen,
     onClose,
     community,
+    inviteToken,
     onJoined
 }: {
     isOpen: boolean;
     onClose: () => void;
     community: Community | null;
+    inviteToken: string | null;
     onJoined: () => void;
 }) {
     const { theme } = useTheme();
@@ -264,6 +266,7 @@ function JoinCommunityModal({
 
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [requestMessage, setRequestMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -294,6 +297,35 @@ function JoinCommunityModal({
             onJoined();
             onClose();
             setPassword('');
+        }
+    };
+
+    const handleRequestAccess = async () => {
+        if (!community) return;
+
+        setLoading(true);
+        setError('');
+
+        const { success, error: requestError } = await communityService.createCommunityJoinRequest(
+            community.id,
+            {
+                requesterEmail: user?.email || 'demo@cybervault.com',
+                inviteToken: inviteToken || undefined,
+                message: requestMessage
+            }
+        );
+
+        setLoading(false);
+
+        if (requestError) {
+            setError(requestError.message);
+            return;
+        }
+
+        if (success) {
+            onClose();
+            setPassword('');
+            setRequestMessage('');
         }
     };
 
@@ -330,6 +362,11 @@ function JoinCommunityModal({
                 {/* Community Info */}
                 <div className={`p-4 rounded-xl mb-4 ${isDark ? 'bg-[#1E293B]' : 'bg-[#E4F3EC]'
                     }`}>
+                    {inviteToken && (
+                        <div className={`mb-2 inline-flex px-2 py-1 rounded-full text-[11px] font-medium ${isDark ? 'bg-primary-500/20 text-primary-300' : 'bg-primary-100 text-primary-700'}`}>
+                            Invitation Link Verified
+                        </div>
+                    )}
                     <p className={`text-sm mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
                         {community.description || 'No description provided'}
                     </p>
@@ -372,6 +409,20 @@ function JoinCommunityModal({
                         </div>
                     </div>
 
+                    {/* Request Message */}
+                    <div>
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-dark-300' : 'text-[#334155]'}`}>
+                            Request Message (Optional)
+                        </label>
+                        <textarea
+                            value={requestMessage}
+                            onChange={(e) => setRequestMessage(e.target.value)}
+                            placeholder="Hi admin, I'd like to join this community."
+                            className="input-field resize-none h-20"
+                            maxLength={240}
+                        />
+                    </div>
+
                     {/* Error */}
                     {error && (
                         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
@@ -402,6 +453,14 @@ function JoinCommunityModal({
                             )}
                         </button>
                     </div>
+
+                    <button
+                        onClick={handleRequestAccess}
+                        disabled={loading}
+                        className={`w-full py-2.5 rounded-xl text-sm font-medium transition-colors ${isDark ? 'bg-[#1E293B] text-dark-300 hover:bg-[#334155]' : 'bg-[#E4F3EC] text-[#334155] hover:bg-[#d5ece1]'}`}
+                    >
+                        Send Join Request to Admin
+                    </button>
                 </div>
             </div>
         </div>
@@ -413,6 +472,7 @@ export default function Communities() {
     const { theme } = useTheme();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const isDark = theme === 'dark';
 
     const [myCommunities, setMyCommunities] = useState<Community[]>([]);
@@ -425,6 +485,7 @@ export default function Communities() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
+    const [inviteTokenFromUrl, setInviteTokenFromUrl] = useState<string | null>(null);
 
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
     const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
@@ -445,9 +506,66 @@ export default function Communities() {
         loadCommunities();
     }, []);
 
+    useEffect(() => {
+        if (loading) return;
+
+        const params = new URLSearchParams(location.search);
+        const inviteToken = params.get('inviteToken');
+        const inviteId = params.get('invite');
+        if (!inviteToken && !inviteId) return;
+
+        if (inviteToken) {
+            const openInviteFlow = async () => {
+                const { data: invite } = await communityService.getCommunityInviteByToken(inviteToken);
+                if (!invite) return;
+
+                const knownCommunity = allCommunities.find(c => c.id === invite.community_id);
+                const fallbackCommunity = knownCommunity || (await communityService.getCommunityById(invite.community_id)).data;
+                if (!fallbackCommunity) return;
+
+                const alreadyMember = myCommunities.some(c => c.id === fallbackCommunity.id);
+                if (alreadyMember) {
+                    navigate(`/community/${fallbackCommunity.id}`, { replace: true });
+                    return;
+                }
+
+                setActiveTab('browse');
+                setSelectedCommunity(fallbackCommunity);
+                setInviteTokenFromUrl(inviteToken);
+                setShowJoinModal(true);
+            };
+
+            openInviteFlow();
+            return;
+        }
+
+        const invitedCommunity = allCommunities.find(c => c.id === inviteId);
+        if (!invitedCommunity) return;
+
+        const alreadyMember = myCommunities.some(c => c.id === inviteId);
+        if (alreadyMember) {
+            navigate(`/community/${inviteId}`, { replace: true });
+            return;
+        }
+
+        setActiveTab('browse');
+        setSelectedCommunity(invitedCommunity);
+        setInviteTokenFromUrl(null);
+        setShowJoinModal(true);
+    }, [loading, location.search, allCommunities, myCommunities, navigate]);
+
     const handleJoinClick = (community: Community) => {
         setSelectedCommunity(community);
+        setInviteTokenFromUrl(null);
         setShowJoinModal(true);
+    };
+
+    const handleCloseJoinModal = () => {
+        setShowJoinModal(false);
+        setInviteTokenFromUrl(null);
+        if (new URLSearchParams(location.search).has('invite') || new URLSearchParams(location.search).has('inviteToken')) {
+            navigate('/communities', { replace: true });
+        }
     };
 
     const filteredMyCommunities = myCommunities.filter(c =>
@@ -673,8 +791,9 @@ export default function Communities() {
             />
             <JoinCommunityModal
                 isOpen={showJoinModal}
-                onClose={() => setShowJoinModal(false)}
+                onClose={handleCloseJoinModal}
                 community={selectedCommunity}
+                inviteToken={inviteTokenFromUrl}
                 onJoined={loadCommunities}
             />
         </div>

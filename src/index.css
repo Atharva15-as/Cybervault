@@ -489,3 +489,88 @@
 .light .divide-dark-700\/50> :not([hidden])~ :not([hidden]) {
     border-color: #cbd5e1;
 }
+
+/* ================================
+   GLOBAL ANIMATED BACKGROUND
+   ================================ */
+.site-shell {
+    position: relative;
+    isolation: isolate;
+}
+
+.global-bg-animation {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 12;
+    overflow: hidden;
+}
+
+.global-bg-animation::before,
+.global-bg-animation::after {
+    content: '';
+    position: absolute;
+    inset: -12%;
+    will-change: transform, opacity;
+}
+
+.global-bg-animation::before {
+    background:
+        radial-gradient(40% 35% at 18% 22%, rgba(0, 210, 180, 0.14) 0%, rgba(0, 210, 180, 0) 70%),
+        radial-gradient(44% 32% at 82% 78%, rgba(30, 155, 255, 0.12) 0%, rgba(30, 155, 255, 0) 72%),
+        radial-gradient(36% 32% at 50% 52%, rgba(18, 255, 190, 0.08) 0%, rgba(18, 255, 190, 0) 75%);
+    mix-blend-mode: screen;
+    opacity: 0.42;
+    animation: globalBgFloatA 24s ease-in-out infinite alternate;
+}
+
+.global-bg-animation::after {
+    background-image:
+        linear-gradient(rgba(34, 211, 238, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
+    background-size: 68px 68px;
+    mix-blend-mode: soft-light;
+    opacity: 0.3;
+    animation: globalBgFloatB 30s linear infinite;
+}
+
+.light .global-bg-animation::before {
+    mix-blend-mode: multiply;
+    opacity: 0.18;
+}
+
+.light .global-bg-animation::after {
+    opacity: 0.14;
+    mix-blend-mode: multiply;
+}
+
+@keyframes globalBgFloatA {
+    0% {
+        transform: translate3d(-1.2%, -0.8%, 0) scale(1);
+    }
+
+    50% {
+        transform: translate3d(1.5%, 1%, 0) scale(1.04);
+    }
+
+    100% {
+        transform: translate3d(0.8%, -1.1%, 0) scale(1.02);
+    }
+}
+
+@keyframes globalBgFloatB {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+
+    100% {
+        transform: translate3d(-56px, -56px, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .global-bg-animation::before,
+    .global-bg-animation::after {
+        animation: none !important;
+    }
+}

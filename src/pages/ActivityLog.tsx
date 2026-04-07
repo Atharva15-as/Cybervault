@@ -74,29 +74,8 @@ export default function ActivityLog() {
     }, []);
 
     const loadActivities = () => {
-        const all = activityService.getAll();
-        // If empty, seed with some demo data
-        if (all.length === 0) {
-            const demoActivities: { type: ActivityType; title: string; desc: string; minAgo: number }[] = [
-                { type: 'file_upload', title: 'File Uploaded', desc: 'Uploaded Financial_Report_2024.pdf', minAgo: 5 },
-                { type: 'scan_file', title: 'File Scanned', desc: 'Security scan completed for Financial_Report_2024.pdf', minAgo: 5 },
-                { type: 'file_share', title: 'File Shared', desc: 'Shared Financial_Report_2024.pdf via secure link', minAgo: 10 },
-                { type: 'login', title: 'Login', desc: 'Signed in with Google OAuth', minAgo: 30 },
-                { type: 'file_upload', title: 'File Uploaded', desc: 'Uploaded Project_Backup.zip', minAgo: 60 },
-                { type: 'scan_url', title: 'URL Scanned', desc: 'Scanned https://example.com for threats', minAgo: 120 },
-                { type: 'file_download', title: 'File Downloaded', desc: 'Downloaded Project_Backup.zip', minAgo: 180 },
-                { type: 'community_join', title: 'Joined Community', desc: 'Joined "CyberSec Research" community', minAgo: 1440 },
-            ];
-            demoActivities.forEach(d => {
-                const entry = activityService.log(d.type, d.title, d.desc);
-                entry.timestamp = new Date(Date.now() - d.minAgo * 60000).toISOString();
-            });
-            // Re-save with corrected timestamps
-            const seeded = activityService.getAll();
-            setActivities(seeded);
-        } else {
-            setActivities(all);
-        }
+        activityService.pruneOldAndInvalid();
+        setActivities(activityService.getAll());
     };
 
     const stats = activityService.getStats();

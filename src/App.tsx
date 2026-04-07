@@ -18,6 +18,8 @@ const Home = lazy(() => import('./pages/Home'));
 const Features = lazy(() => import('./pages/Features'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
@@ -33,6 +35,7 @@ const ActivityLog = lazy(() => import('./pages/ActivityLog'));
 const Converter = lazy(() => import('./pages/Converter'));
 const SecureEncrypt = lazy(() => import('./pages/SecureEncrypt'));
 const FileEncryptDecrypt = lazy(() => import('./pages/FileEncryptDecrypt'));
+const SiemTool = lazy(() => import('./pages/SiemTool'));
 
 // Loading fallback
 function PageLoader() {
@@ -81,16 +84,19 @@ function AppContent() {
     const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname);
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="site-shell min-h-screen flex flex-col">
             <ScrollToTop />
+            <div className="global-bg-animation" aria-hidden="true" />
             <Navbar />
-            <main className="flex-1">
+            <main className="flex-1 relative z-10">
                 <PageTransition>
                     <Suspense fallback={<PageLoader />}>
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/features" element={<Features />} />
                             <Route path="/how-it-works" element={<HowItWorks />} />
+                            <Route path="/privacy" element={<PrivacyPolicy />} />
+                            <Route path="/terms" element={<TermsAndConditions />} />
                             <Route
                                 path="/dashboard"
                                 element={
@@ -143,6 +149,14 @@ function AppContent() {
                             <Route path="/converter" element={<Converter />} />
                             <Route path="/encrypt" element={<SecureEncrypt />} />
                             <Route path="/file-encrypt-decrypt" element={<FileEncryptDecrypt />} />
+                            <Route
+                                path="/siem"
+                                element={
+                                    <ProtectedRoute>
+                                        <SiemTool />
+                                    </ProtectedRoute>
+                                }
+                            />
                             <Route path="/scanner/file" element={<FileScanner />} />
                             <Route path="/scanner/url" element={<UrlScanner />} />
                             <Route
@@ -157,8 +171,8 @@ function AppContent() {
                     </Suspense>
                 </PageTransition>
             </main>
-            {!isAuthPage && <Footer />}
-            <MobileBottomNav />
+            {!isAuthPage && <div className="relative z-10"><Footer /></div>}
+            <div className="relative z-10"><MobileBottomNav /></div>
             <KeyboardShortcuts
                 onNavigate={(path) => navigate(path)}
                 onToggleTheme={toggleTheme}

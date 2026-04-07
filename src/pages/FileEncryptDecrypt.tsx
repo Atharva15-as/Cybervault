@@ -48,6 +48,9 @@ export default function FileEncryptDecrypt({
     const [showKeyHelp, setShowKeyHelp] = useState(false);
     const [showKey, setShowKey] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [enableConfidentialMode, setEnableConfidentialMode] = useState(false);
+    const [confidentialDays, setConfidentialDays] = useState(3);
+    const [authorizedRecipientEmail, setAuthorizedRecipientEmail] = useState('');
     const [managedResult, setManagedResult] = useState<{
         fileId: string;
         encryptedBlob: Blob;
@@ -111,8 +114,20 @@ export default function FileEncryptDecrypt({
                 setManagedResult(null);
 
                 if (encryptOutputMode === 'managed') {
+                    if (enableConfidentialMode) {
+                        const normalizedEmail = authorizedRecipientEmail.trim().toLowerCase();
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(normalizedEmail)) {
+                            throw new Error('Please enter a valid authorized recipient email for confidential mode.');
+                        }
+                    }
+
                     const uploadResult = await storageEncryptionService.uploadEncryptedFile(selectedFile, {
                         passphrase: key,
+                        expiryDuration: enableConfidentialMode ? '30d' : '7d',
+                        confidentialMode: enableConfidentialMode,
+                        confidentialAccessDays: Math.min(10, Math.max(1, confidentialDays)),
+                        authorizedRecipientEmail: authorizedRecipientEmail.trim().toLowerCase(),
                     });
 
                     if (
@@ -167,7 +182,7 @@ export default function FileEncryptDecrypt({
                             const { blob, fileName } = await encryptionService.decryptFile(selectedFile, key);
                             decryptedBlob = blob;
                             decryptedName = fileName;
-                        } catch (encError: any) {
+                        } catch (error: any) {
                             throw new Error('Decryption failed. Unsupported format, wrong key, or corrupted file.');
                         }
                     } else {
@@ -306,6 +321,62 @@ export default function FileEncryptDecrypt({
                                     Managed (Share Link/QR/Email)
                                 </button>
                             </div>
+                        </div>
+                    )}
+
+                    {mode === 'encrypt' && encryptOutputMode === 'managed' && (
+                        <div className={`rounded-xl border p-3 space-y-3 ${isDark ? 'bg-[#1E293B]/40 border-[#334155]' : 'bg-[#F8FCFA] border-[#CBD5E1]'}`}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className={`text-sm font-semibold ${textPrimary}`}>Confidential Time-Lock</p>
+                                    <p className={`text-xs ${textMuted}`}>
+                                        Double protection with recipient authorization and website-only decrypt.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setEnableConfidentialMode((v) => !v)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                                        enableConfidentialMode
+                                            ? 'bg-primary-500 text-white'
+                                            : isDark
+                                                ? 'bg-[#0F172A] text-slate-300'
+                                                : 'bg-[#E4F3EC] text-[#334155]'
+                                    }`}
+                                >
+                                    {enableConfidentialMode ? 'Enabled' : 'Disabled'}
+                                </button>
+                            </div>
+
+                            {enableConfidentialMode && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className={`block text-xs font-medium mb-1 ${textMuted}`}>
+                                            Access Timer (Max 10 days)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={10}
+                                            value={confidentialDays}
+                                            onChange={(e) => setConfidentialDays(Math.min(10, Math.max(1, Number(e.target.value) || 1)))}
+                                            className="input-field py-2.5"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={`block text-xs font-medium mb-1 ${textMuted}`}>
+                                            Authorized Recipient Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={authorizedRecipientEmail}
+                                            onChange={(e) => setAuthorizedRecipientEmail(e.target.value)}
+                                            placeholder="recipient@example.com"
+                                            className="input-field py-2.5"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 

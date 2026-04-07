@@ -35,7 +35,7 @@ export default function FileScanner() {
         try {
             const res = await analyzeFile(file, (s, p) => { setStage(s); setProgress(p); });
             setResult(res);
-            await saveScanResult(res);
+            await saveScanResult(res, user?.id);
         } catch (err) { console.error(err); }
         setScanning(false);
     };
