@@ -100,10 +100,10 @@ export default function Login() {
 
             addToast({ type: 'success', title: 'Welcome!', message: `Logged in as ${formData.email}` });
 
-            // If user came from upload flow, take them directly to encrypt/upload page
+            // If user came from upload flow, take them directly to vault workspace
             const redirectPath =
                 state?.from?.pathname ||
-                (state?.action === 'upload' ? '/file-encrypt-decrypt' : '/dashboard');
+                (state?.action === 'upload' ? '/workspace' : '/dashboard');
 
             setTimeout(() => {
                 navigate(redirectPath);

@@ -21,7 +21,7 @@ export default function Home() {
             navigate('/login', {
                 state: {
                     action: 'upload',
-                    from: { pathname: '/file-encrypt-decrypt' },
+                    from: { pathname: '/workspace' },
                 },
             });
             return;
@@ -29,9 +29,9 @@ export default function Home() {
         addToast({
             type: 'info',
             title: 'Upload Your File',
-            message: 'Continue in the encryptor to upload and encrypt your file.',
+            message: 'Continue in the workspace to upload and encrypt your file.',
         });
-        navigate('/file-encrypt-decrypt');
+        navigate('/workspace');
     };
 
     return (

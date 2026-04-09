@@ -7,7 +7,8 @@ import {
     ShieldAlert,
     Cloud,
     X,
-    ArrowRight
+    ArrowRight,
+    Zap
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
@@ -83,6 +84,18 @@ const features = [
             'Rate limiting to prevent brute-force attacks.',
             'Comprehensive audit logs for all file access events.',
             'Automatic account lockout after failed login attempts.',
+        ]
+    },
+    {
+        icon: Zap,
+        title: 'SIEM — Security Monitoring',
+        description: 'Real-time Security Information and Event Management dashboard. Monitor, correlate, and respond to security events across your entire vault.',
+        highlight: 'Real-Time',
+        details: [
+            'Live event log streaming with severity classification (INFO, WARN, CRITICAL).',
+            'Anomaly detection using behavioral baselines and pattern correlation.',
+            'Geographic threat map with IP intelligence and country-level blocking.',
+            'Instant alerts via email for high-severity security incidents.',
         ]
     },
 ];

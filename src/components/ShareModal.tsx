@@ -221,190 +221,246 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
     const isExpired = timeRemaining === 'Expired';
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className={`glass-card p-6 max-w-lg w-full animate-slide-up max-h-[90vh] overflow-y-auto ${isDark ? '' : 'bg-[#F9FEFC]'}`}>
-                <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
-                            <Share2 className="h-4 w-4 text-primary-500" />
+        <>
+            {/* Professional Backdrop */}
+            <div 
+                onClick={onClose}
+                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" 
+            />
+            
+            {/* Professional Modal - centered & wider */}
+            <div className={`absolute left-1/2 top-[32%] -translate-x-1/2 -translate-y-1/2 z-50 rounded-2xl w-[900px] max-h-[80vh] overflow-y-auto shadow-2xl border ${
+                isDark 
+                    ? 'bg-[#0F172A] border-[#334155]' 
+                    : 'bg-white border-[#E2E8F0]'
+            }`}>
+                {/* Header */}
+                <div className={`sticky top-0 flex items-center justify-between p-6 border-b ${
+                    isDark 
+                        ? 'border-[#334155] bg-[#0F172A]/95' 
+                        : 'border-[#E2E8F0] bg-white/95'
+                } backdrop-blur-sm`}>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg">
+                            <Share2 className="h-5 w-5 text-white" />
                         </div>
-                        <h3 className={`text-lg font-semibold ${textPrimary}`}>Share Securely</h3>
+                        <div>
+                            <h3 className={`text-lg font-bold ${textPrimary}`}>Share Securely</h3>
+                            <p className={`text-xs ${textMuted}`}>Send encrypted access to recipients</p>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
                         aria-label="Close share dialog"
-                        className={`p-2 rounded-lg ${isDark ? 'text-dark-400 hover:text-dark-200 hover:bg-[#334155]' : 'text-gray-500 hover:text-gray-900 hover:bg-[#E4F3EC]'}`}
+                        className={`p-2 rounded-lg transition-colors ${
+                            isDark 
+                                ? 'text-dark-400 hover:text-dark-200 hover:bg-[#1E293B]' 
+                                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
                     >
                         <X className="h-5 w-5" />
                     </button>
                 </div>
 
-                <div className={`p-4 rounded-xl mb-5 ${isDark ? 'bg-[#1E293B]' : 'bg-[#E4F3EC]'}`}>
-                    <p className={`font-medium mb-2 ${textPrimary}`}>{file.name}</p>
-                    <div className="flex flex-wrap gap-3 text-xs">
-                        <span className={`flex items-center gap-1 ${textMuted}`}>
-                            <Hash className="h-3 w-3" />
-                            <span className="font-mono">{file.hash.slice(0, 16)}...</span>
-                        </span>
-                        <span className={`flex items-center gap-1 ${isExpired ? 'text-red-500' : 'text-green-500'}`}>
-                            <Clock className="h-3 w-3" />
-                            {isExpired ? 'Expired' : `Expires in ${timeRemaining}`}
-                        </span>
-                        {file.hasPin && (
-                            <span className="flex items-center gap-1 text-primary-500">
-                                <Lock className="h-3 w-3" />
-                                Encrypted
+                {/* Content */}
+                <div className="p-5 space-y-4">
+                    {/* File Info Card */}
+                    <div className={`p-4 rounded-xl border-l-4 border-l-primary-500 ${
+                        isDark 
+                            ? 'bg-[#1E293B]/50 border border-[#334155]' 
+                            : 'bg-[#F0F9FF] border border-[#E0F2FE]'
+                    }`}>
+                        <p className={`font-semibold ${textPrimary} mb-2`}>{file.name}</p>
+                        <div className="flex flex-wrap gap-4 text-xs">
+                            <span className={`flex items-center gap-1.5 ${textMuted}`}>
+                                <Hash className="h-3.5 w-3.5" />
+                                <span className="font-mono">{file.hash.slice(0, 12)}...</span>
                             </span>
-                        )}
-                        {file.downloadCount !== undefined && (
-                            <span className={`flex items-center gap-1 ${textMuted}`}>
-                                <Download className="h-3 w-3" />
-                                {file.downloadCount} downloads
+                            <span className={`flex items-center gap-1.5 ${isExpired ? 'text-red-500' : 'text-emerald-500'}`}>
+                                <Clock className="h-3.5 w-3.5" />
+                                {isExpired ? 'Expired' : `Expires in ${timeRemaining}`}
                             </span>
-                        )}
+                            {file.hasPin && (
+                                <span className="flex items-center gap-1.5 text-primary-500">
+                                    <Lock className="h-3.5 w-3.5" />
+                                    Encrypted
+                                </span>
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <div className={`flex gap-1 mb-5 p-1 rounded-xl ${isDark ? 'bg-[#1E293B]' : 'bg-[#E4F3EC]'}`}>
-                    <button
-                        onClick={() => setActiveTab('platforms')}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                            activeTab === 'platforms' ? 'bg-primary-500 text-white' : textMuted
-                        }`}
-                    >
-                        <Share2 className="h-3.5 w-3.5" />
-                        Platforms
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('email')}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
-                            activeTab === 'email' ? 'bg-primary-500 text-white' : textMuted
-                        }`}
-                    >
-                        <Mail className="h-3.5 w-3.5" />
-                        Email
-                    </button>
-                </div>
+                    {/* Tabs */}
+                    <div className={`flex gap-2 p-1.5 rounded-lg border ${
+                        isDark 
+                            ? 'bg-[#1E293B]/30 border-[#334155]' 
+                            : 'bg-gray-100 border-gray-200'
+                    }`}>
+                        <button
+                            onClick={() => setActiveTab('platforms')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                                activeTab === 'platforms' 
+                                    ? 'bg-primary-500 text-white shadow-lg' 
+                                    : `${textMuted} hover:${isDark ? 'bg-[#334155]/30' : 'bg-white'}`
+                            }`}
+                        >
+                            <Share2 className="h-4 w-4" />
+                            Platforms
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('email')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                                activeTab === 'email' 
+                                    ? 'bg-primary-500 text-white shadow-lg' 
+                                    : `${textMuted} hover:${isDark ? 'bg-[#334155]/30' : 'bg-white'}`
+                            }`}
+                        >
+                            <Mail className="h-4 w-4" />
+                            Email
+                        </button>
+                    </div>
 
-                {activeTab === 'platforms' ? (
-                    <div className="space-y-4">
-                        <p className={`text-sm ${textMuted}`}>
-                            Share this encrypted file through supported platforms. The access URL is added automatically.
+                    {/* Platforms Content */}
+                    {activeTab === 'platforms' ? (
+                    <div className="flex flex-col gap-4">
+                        <p className={`text-sm ${textMuted} leading-relaxed`}>
+                            Share this encrypted file through supported platforms.
                         </p>
 
-                        <div>
-                            <label className={`block text-xs font-medium mb-2 ${textMuted}`}>
-                                <Lock className="h-3 w-3 inline mr-1" />
-                                Additional Link Password (Optional)
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showLinkPassword ? 'text' : 'password'}
-                                    value={linkPassword}
-                                    onChange={(e) => setLinkPassword(e.target.value)}
-                                    placeholder="Extra password for this link..."
-                                    className="input-field text-sm pr-10"
-                                />
-                                <button
-                                    onClick={() => setShowLinkPassword(!showLinkPassword)}
-                                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${textMuted}`}
-                                >
+                        {/* Settings Row */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Link Password Section */}
+                            <div className={`p-4 rounded-lg border ${isDark ? 'border-[#334155]' : 'border-[#E2E8F0]'}`}>
+                                <label className={`flex items-center gap-2 text-sm font-semibold mb-3 ${textPrimary}`}>
+                                    <Lock className="h-4 w-4 text-primary-500" />
+                                    Link Password
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showLinkPassword ? 'text' : 'password'}
+                                        value={linkPassword}
+                                        onChange={(e) => setLinkPassword(e.target.value)}
+                                        placeholder="Optional extra security layer..."
+                                        className={`w-full px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors pr-10 ${
+                                            isDark
+                                                ? 'bg-[#1E293B] border-[#334155] text-white placeholder-[#64748B]'
+                                                : 'bg-white border-[#E2E8F0] text-gray-900 placeholder-gray-400'
+                                        } focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                                    />
+                                    <button
+                                        onClick={() => setShowLinkPassword(!showLinkPassword)}
+                                        className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-dark-400 hover:text-dark-200' : 'text-gray-400 hover:text-gray-600'}`}
+                                    >
                                     {showLinkPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
-                            <p className={`text-[10px] mt-1 ${textMuted}`}>
-                                Recipients will need both the encryption passphrase and this link password
-                            </p>
                             <button
                                 type="button"
                                 onClick={handleSaveLinkPassword}
                                 disabled={savingLinkPassword}
-                                className="btn-secondary mt-2 text-xs"
+                                className={`w-full mt-3 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+                                    isDark
+                                        ? 'bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50'
+                                        : 'bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50'
+                                }`}
                             >
-                                {savingLinkPassword ? 'Saving...' : linkPassword ? 'Save Link Password' : 'Remove Link Password'}
+                                {savingLinkPassword ? 'Saving...' : linkPassword ? '💾 Save' : '🗑️ Remove'}
                             </button>
-                        </div>
+                            </div>
 
-                        <div>
-                            <label className={`block text-xs font-medium mb-2 ${textMuted}`}>
-                                Download Limit (Optional)
-                            </label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    min={0}
-                                    step={1}
-                                    value={maxDownloads}
-                                    onChange={(e) => setMaxDownloads(Math.max(0, Number(e.target.value) || 0))}
-                                    className="input-field text-sm w-32"
-                                    aria-label="Max downloads"
-                                />
+                            {/* Download Limit Section */}
+                            <div className={`p-4 rounded-lg border ${isDark ? 'border-[#334155]' : 'border-[#E2E8F0]'}`}>
+                                <label className={`flex items-center gap-2 text-sm font-semibold mb-3 ${textPrimary}`}>
+                                    <Download className="h-4 w-4 text-primary-500" />
+                                    Download Limit
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        step={1}
+                                        value={maxDownloads}
+                                        onChange={(e) => setMaxDownloads(Math.max(0, Number(e.target.value) || 0))}
+                                        placeholder="0 = unlimited"
+                                        className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                                            isDark
+                                                ? 'bg-[#1E293B] border-[#334155] text-white placeholder-[#64748B]'
+                                                : 'bg-white border-[#E2E8F0] text-gray-900 placeholder-gray-400'
+                                        } focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                                    />
+                                </div>
                                 <button
                                     type="button"
                                     onClick={handleSaveMaxDownloads}
                                     disabled={savingMaxDownloads}
-                                    className="btn-secondary text-xs"
+                                    className={`w-full mt-3 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+                                        isDark
+                                            ? 'bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50'
+                                            : 'bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50'
+                                    }`}
                                 >
-                                    {savingMaxDownloads ? 'Saving...' : 'Save Limit'}
+                                    {savingMaxDownloads ? 'Saving...' : 'Save'}
                                 </button>
                             </div>
-                            <p className={`text-[10px] mt-1 ${textMuted}`}>
-                                Set to 0 for unlimited downloads.
-                            </p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {/* Platform Buttons Row */}
+                        <div className="grid grid-cols-4 gap-2 mt-1">
                             <button
                                 onClick={handleNativeShare}
-                                aria-label="Share using device share"
-                                className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-sm transition-all ${
-                                    isDark ? 'border-dark-600 hover:bg-[#334155]' : 'border-gray-200 hover:bg-[#E4F3EC]'
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all font-semibold text-xs ${
+                                    isDark
+                                        ? 'border-[#334155] hover:border-primary-500 hover:bg-[#1E293B] text-white'
+                                        : 'border-[#E2E8F0] hover:border-primary-500 hover:bg-gray-50 text-gray-700'
                                 }`}
                             >
-                                <Smartphone className="h-4 w-4 text-primary-500" />
-                                <span className={textPrimary}>Device Share</span>
+                                <Smartphone className="h-5 w-5 text-primary-500" />
+                                Device
                             </button>
                             <button
                                 onClick={handleWhatsAppShare}
-                                aria-label="Share on WhatsApp"
-                                className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-sm transition-all ${
-                                    isDark ? 'border-dark-600 hover:bg-[#334155]' : 'border-gray-200 hover:bg-[#E4F3EC]'
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all font-semibold text-xs ${
+                                    isDark
+                                        ? 'border-[#334155] hover:border-green-500 hover:bg-[#1E293B] text-white'
+                                        : 'border-[#E2E8F0] hover:border-green-500 hover:bg-gray-50 text-gray-700'
                                 }`}
                             >
-                                <MessageCircle className="h-4 w-4 text-green-500" />
-                                <span className={textPrimary}>WhatsApp</span>
+                                <MessageCircle className="h-5 w-5 text-green-500" />
+                                WhatsApp
                             </button>
                             <button
                                 onClick={handleTelegramShare}
-                                aria-label="Share on Telegram"
-                                className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-sm transition-all ${
-                                    isDark ? 'border-dark-600 hover:bg-[#334155]' : 'border-gray-200 hover:bg-[#E4F3EC]'
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all font-semibold text-xs ${
+                                    isDark
+                                        ? 'border-[#334155] hover:border-sky-500 hover:bg-[#1E293B] text-white'
+                                        : 'border-[#E2E8F0] hover:border-sky-500 hover:bg-gray-50 text-gray-700'
                                 }`}
                             >
-                                <Send className="h-4 w-4 text-sky-500" />
-                                <span className={textPrimary}>Telegram</span>
+                                <Send className="h-5 w-5 text-sky-500" />
+                                Telegram
                             </button>
                             <button
                                 onClick={() => setActiveTab('email')}
-                                className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-sm transition-all ${
-                                    isDark ? 'border-dark-600 hover:bg-[#334155]' : 'border-gray-200 hover:bg-[#E4F3EC]'
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all font-semibold text-xs ${
+                                    isDark
+                                        ? 'border-[#334155] hover:border-primary-500 hover:bg-[#1E293B] text-white'
+                                        : 'border-[#E2E8F0] hover:border-primary-500 hover:bg-gray-50 text-gray-700'
                                 }`}
                             >
-                                <Mail className="h-4 w-4 text-primary-500" />
-                                <span className={textPrimary}>Email</span>
+                                <Mail className="h-5 w-5 text-primary-500" />
+                                Email
                             </button>
                         </div>
-
                     </div>
-                ) : (
-                    <div className="space-y-4">
-                        <p className={`text-sm ${textMuted}`}>
+                    ) : (
+                    <div className="space-y-5">
+                        <p className={`text-sm ${textMuted} leading-relaxed`}>
                             Send secure invitations to recipients via email.
                         </p>
 
-                        <div>
-                            <label className={`block text-xs font-medium mb-2 ${textMuted}`}>
-                                <Mail className="h-3 w-3 inline mr-1" />
+                        {/* Email Input */}
+                        <div className={`p-4 rounded-lg border ${isDark ? 'border-[#334155]' : 'border-[#E2E8F0]'}`}>
+                            <label className={`flex items-center gap-2 text-sm font-semibold mb-3 ${textPrimary}`}>
+                                <Mail className="h-4 w-4 text-primary-500" />
                                 Recipient Emails
                             </label>
                             <div className="flex gap-2">
@@ -414,107 +470,142 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
                                     onChange={(e) => setEmailInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && addEmail()}
                                     placeholder="Enter email address..."
-                                    className="input-field flex-1 text-sm"
+                                    className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                                        isDark
+                                            ? 'bg-[#1E293B] border-[#334155] text-white placeholder-[#64748B]'
+                                            : 'bg-white border-[#E2E8F0] text-gray-900 placeholder-gray-400'
+                                    } focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
                                 />
-                                <button onClick={addEmail} className="btn-secondary px-4">
+                                <button 
+                                    onClick={addEmail} 
+                                    className={`px-6 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+                                        isDark
+                                            ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                                            : 'bg-primary-600 hover:bg-primary-700 text-white'
+                                    }`}
+                                >
                                     Add
                                 </button>
                             </div>
                         </div>
 
+                        {/* Email Tags */}
                         {emailList.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                                 {emailList.map((email) => (
                                     <span
                                         key={email}
-                                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs ${
-                                            isDark ? 'bg-primary-500/20 text-primary-300' : 'bg-primary-50 text-primary-700'
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border ${
+                                            isDark 
+                                                ? 'bg-primary-500/10 border-primary-500/30 text-primary-300' 
+                                                : 'bg-primary-50 border-primary-200 text-primary-700'
                                         }`}
                                     >
                                         {email}
-                                        <button onClick={() => removeEmail(email)} className="hover:text-red-500">
-                                            <X className="h-3 w-3" />
+                                        <button onClick={() => removeEmail(email)} className="hover:opacity-70 transition-opacity">
+                                            <X className="h-4 w-4" />
                                         </button>
                                     </span>
                                 ))}
                             </div>
                         )}
 
-                        <div>
-                            <label className={`block text-xs font-medium mb-2 ${textMuted}`}>
-                                <Users className="h-3 w-3 inline mr-1" />
-                                Access Role
+                        {/* Access Role */}
+                        <div className={`p-4 rounded-lg border ${isDark ? 'border-[#334155]' : 'border-[#E2E8F0]'}`}>
+                            <label className={`flex items-center gap-2 text-sm font-semibold mb-3 ${textPrimary}`}>
+                                <Users className="h-4 w-4 text-primary-500" />
+                                Access Permissions
                             </label>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setEmailRole('viewer')}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all border ${
+                                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all border-2 ${
                                         emailRole === 'viewer'
-                                            ? 'bg-primary-500/20 border-primary-500/30 text-primary-500'
+                                            ? isDark
+                                                ? 'bg-primary-600/30 border-primary-500 text-primary-400'
+                                                : 'bg-primary-50 border-primary-500 text-primary-700'
                                             : isDark
-                                              ? `border-dark-600 ${textMuted}`
-                                              : `border-gray-200 ${textMuted}`
+                                              ? 'border-[#334155] hover:border-[#475569] text-white'
+                                              : 'border-[#E2E8F0] hover:border-[#CBD5E1] text-gray-700'
                                     }`}
                                 >
-                                    View and Download
+                                    👁️ View
                                 </button>
                                 <button
                                     onClick={() => setEmailRole('editor')}
-                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all border ${
+                                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all border-2 ${
                                         emailRole === 'editor'
-                                            ? 'bg-primary-500/20 border-primary-500/30 text-primary-500'
+                                            ? isDark
+                                                ? 'bg-primary-600/30 border-primary-500 text-primary-400'
+                                                : 'bg-primary-50 border-primary-500 text-primary-700'
                                             : isDark
-                                              ? `border-dark-600 ${textMuted}`
-                                              : `border-gray-200 ${textMuted}`
+                                              ? 'border-[#334155] hover:border-[#475569] text-white'
+                                              : 'border-[#E2E8F0] hover:border-[#CBD5E1] text-gray-700'
                                     }`}
                                 >
-                                    Full Access
+                                    ✏️ Full
                                 </button>
                             </div>
                         </div>
 
+                        {/* Send Button */}
                         <button
                             onClick={handleEmailShare}
                             disabled={emailList.length === 0}
-                            className="btn-primary w-full justify-center disabled:opacity-50"
+                            className={`w-full py-3 px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                                emailList.length === 0
+                                    ? isDark
+                                        ? 'bg-[#334155] text-dark-400 cursor-not-allowed'
+                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                    : isDark
+                                      ? 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white shadow-lg'
+                                      : 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white shadow-lg'
+                            }`}
                         >
                             {emailSent ? (
                                 <>
-                                    <Check className="h-4 w-4 mr-2" />
+                                    <Check className="h-5 w-5" />
                                     Invitations Sent!
                                 </>
                             ) : (
                                 <>
-                                    <Mail className="h-4 w-4 mr-2" />
-                                    Send Secure Invitations ({emailList.length})
+                                    <Mail className="h-5 w-5" />
+                                    Send Invitations ({emailList.length})
                                 </>
                             )}
                         </button>
                     </div>
-                )}
-
-                {onRevoke && (
-                    <div className={`mt-5 pt-4 border-t ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
+                    )}
+            </div>   {/* ✅ ADD THIS LINE (closing main content div) */}
+                {/* Footer Actions */}
+                <div className={`sticky bottom-0 mt-6 pt-6 border-t ${isDark ? 'border-[#334155] bg-[#0F172A]/95' : 'border-[#E2E8F0] bg-white/95'} -mx-6 -mb-6 px-6 py-6 backdrop-blur-sm space-y-2`}>
+                    {onRevoke && (
                         <button
                             onClick={handleRevoke}
-                            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all border-2 ${
                                 isDark
-                                    ? 'text-red-400 hover:bg-red-500/10 border border-red-500/20'
-                                    : 'text-red-600 hover:bg-red-50 border border-red-200'
+                                    ? 'border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50'
+                                    : 'border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400'
                             }`}
                         >
                             <Ban className="h-4 w-4" />
-                            Revoke Access and Disable Link
+                            🗑️ Revoke Access
                         </button>
-                    </div>
-                )}
+                    )}
 
-                <div className="mt-5">
-                    <button onClick={onClose} className="btn-secondary w-full" type="button">
+                    <button 
+                        onClick={onClose} 
+                        className={`w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+                            isDark
+                                ? 'bg-[#1E293B] border border-[#334155] text-white hover:border-[#475569]'
+                                : 'bg-gray-100 border border-[#E2E8F0] text-gray-700 hover:bg-gray-200'
+                        }`}
+                        type="button"
+                    >
                         Close
                     </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
