@@ -8,7 +8,7 @@ const navItems = [
     { icon: Shield, label: 'Scanner', path: '/scanner' },
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', auth: true },
     { icon: Users, label: 'Community', path: '/communities', auth: true },
-    { icon: Lock, label: 'Encrypt', path: '/file-encrypt-decrypt' },
+    { icon: Lock, label: 'Workspace', path: '/workspace', auth: true },
 ];
 
 export default function MobileBottomNav() {

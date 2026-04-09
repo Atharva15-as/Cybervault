@@ -65,6 +65,8 @@ export default function ActivityLog() {
     const [activities, setActivities] = useState<ActivityEntry[]>([]);
     const [filter, setFilter] = useState<ActivityType | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [showAllActivities, setShowAllActivities] = useState(false);
+    const [showClearConfirm, setShowClearConfirm] = useState(false);
 
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
     const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
@@ -87,6 +89,11 @@ export default function ActivityLog() {
             a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             a.description.toLowerCase().includes(searchQuery.toLowerCase())
         );
+    const visibleActivities = showAllActivities ? filteredActivities : filteredActivities.slice(0, 4);
+
+    useEffect(() => {
+        setShowAllActivities(false);
+    }, [filter, searchQuery]);
 
     const filterOptions: { value: ActivityType | 'all'; label: string }[] = [
         { value: 'all', label: 'All' },
@@ -111,10 +118,7 @@ export default function ActivityLog() {
                         <p className={textMuted}>Track all your actions and operations</p>
                     </div>
                     <button
-                        onClick={() => {
-                            activityService.clear();
-                            setActivities([]);
-                        }}
+                        onClick={() => setShowClearConfirm(true)}
                         className="btn-secondary text-sm"
                     >
                         <RotateCcw className="h-4 w-4 mr-2" />
@@ -182,7 +186,7 @@ export default function ActivityLog() {
                         </div>
                     ) : (
                         <div className="divide-y divide-dark-700/50">
-                            {filteredActivities.map((activity) => {
+                            {visibleActivities.map((activity) => {
                                 const Icon = activityIcons[activity.type] || Activity;
                                 const colorClass = activityColors[activity.type] || 'text-gray-500 bg-gray-500/10';
 
@@ -210,7 +214,51 @@ export default function ActivityLog() {
                             })}
                         </div>
                     )}
+                    {filteredActivities.length > 4 && (
+                        <div className={`px-6 py-4 border-t ${isDark ? 'border-dark-700/50' : 'border-gray-200'}`}>
+                            <button
+                                type="button"
+                                onClick={() => setShowAllActivities((prev) => !prev)}
+                                className="text-sm font-medium text-primary-500 hover:text-primary-400 transition-colors"
+                            >
+                                {showAllActivities
+                                    ? 'Show less'
+                                    : `Show more (${filteredActivities.length - 4} more)`}
+                            </button>
+                        </div>
+                    )}
                 </div>
+
+                {showClearConfirm && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className={`w-full max-w-sm rounded-2xl border p-5 shadow-2xl ${isDark ? 'bg-[#0F172A] border-[#334155]' : 'bg-white border-[#CBD5E1]'}`}>
+                            <h3 className={`text-lg font-semibold mb-2 ${textPrimary}`}>Clear Activity Log?</h3>
+                            <p className={`text-sm mb-5 ${textMuted}`}>
+                                This will remove all activity history. This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowClearConfirm(false)}
+                                    className="btn-secondary flex-1 justify-center"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        activityService.clear();
+                                        setActivities([]);
+                                        setShowClearConfirm(false);
+                                    }}
+                                    className="flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

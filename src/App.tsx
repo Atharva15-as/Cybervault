@@ -35,6 +35,7 @@ const ActivityLog = lazy(() => import('./pages/ActivityLog'));
 const Converter = lazy(() => import('./pages/Converter'));
 const SecureEncrypt = lazy(() => import('./pages/SecureEncrypt'));
 const FileEncryptDecrypt = lazy(() => import('./pages/FileEncryptDecrypt'));
+const VaultWorkspace = lazy(() => import('./pages/VaultWorkspace'));
 const SiemTool = lazy(() => import('./pages/SiemTool'));
 
 // Loading fallback
@@ -149,6 +150,14 @@ function AppContent() {
                             <Route path="/converter" element={<Converter />} />
                             <Route path="/encrypt" element={<SecureEncrypt />} />
                             <Route path="/file-encrypt-decrypt" element={<FileEncryptDecrypt />} />
+                            <Route
+                                path="/workspace"
+                                element={
+                                    <ProtectedRoute>
+                                        <VaultWorkspace />
+                                    </ProtectedRoute>
+                                }
+                            />
                             <Route
                                 path="/siem"
                                 element={

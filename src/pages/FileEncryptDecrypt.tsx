@@ -10,6 +10,28 @@ import { encryptionService } from '../services/encryptionService';
 type Mode = 'encrypt' | 'decrypt';
 type EncryptOutputMode = 'local' | 'managed';
 
+const toDateTimeLocalValue = (date: Date): string => {
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+};
+
+const parseDateTimeLocal = (value: string): Date | null => {
+    // Expected format: YYYY-MM-DDTHH:mm
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+    if (!match) return null;
+    const [, y, m, d, hh, mm] = match;
+    const parsed = new Date(
+        Number(y),
+        Number(m) - 1,
+        Number(d),
+        Number(hh),
+        Number(mm),
+        0,
+        0
+    );
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 interface FileEncryptDecryptProps {
     embedded?: boolean;
     showEmbeddedIntro?: boolean;
@@ -47,10 +69,14 @@ export default function FileEncryptDecrypt({
     const [working, setWorking] = useState(false);
     const [showKeyHelp, setShowKeyHelp] = useState(false);
     const [showKey, setShowKey] = useState(false);
+    const [confirmKeyBackedUp, setConfirmKeyBackedUp] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
-    const [enableConfidentialMode, setEnableConfidentialMode] = useState(false);
-    const [confidentialDays, setConfidentialDays] = useState(3);
-    const [authorizedRecipientEmail, setAuthorizedRecipientEmail] = useState('');
+    const [enableTimeLimit, setEnableTimeLimit] = useState(true);
+    const [customExpiryAt, setCustomExpiryAt] = useState(() => {
+        const now = new Date();
+        now.setHours(now.getHours() + 1, 0, 0, 0);
+        return toDateTimeLocalValue(now);
+    });
     const [managedResult, setManagedResult] = useState<{
         fileId: string;
         encryptedBlob: Blob;
@@ -71,11 +97,23 @@ export default function FileEncryptDecrypt({
     const toolContainerClass = isFramelessEmbedded
         ? 'space-y-7'
         : 'glass-card p-6 md:p-8 space-y-6';
+    const nowLocal = new Date();
+    const minExpiryDate = new Date(nowLocal.getTime() + 60 * 1000);
+    minExpiryDate.setSeconds(0, 0);
+    const maxExpiryDate = new Date(nowLocal.getTime() + 10 * 24 * 60 * 60 * 1000);
+    maxExpiryDate.setSeconds(0, 0);
+    const minExpiry = toDateTimeLocalValue(minExpiryDate);
+    const maxExpiry = toDateTimeLocalValue(maxExpiryDate);
 
     useEffect(() => {
         // Force re-entry when switching between encrypt/decrypt for safer UX.
         setKey('');
         setShowKey(false);
+        setConfirmKeyBackedUp(false);
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     }, [mode]);
 
     const generateKey = () => {
@@ -107,6 +145,14 @@ export default function FileEncryptDecrypt({
             addToast({ type: 'error', title: 'Missing Key', message: 'Please provide an encryption key.' });
             return;
         }
+        if (mode === 'encrypt' && !confirmKeyBackedUp) {
+            addToast({
+                type: 'error',
+                title: 'Backup Required',
+                message: 'Please confirm you have safely backed up the key/passphrase before continuing.',
+            });
+            return;
+        }
 
         setWorking(true);
         try {
@@ -114,20 +160,26 @@ export default function FileEncryptDecrypt({
                 setManagedResult(null);
 
                 if (encryptOutputMode === 'managed') {
-                    if (enableConfidentialMode) {
-                        const normalizedEmail = authorizedRecipientEmail.trim().toLowerCase();
-                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                        if (!emailRegex.test(normalizedEmail)) {
-                            throw new Error('Please enter a valid authorized recipient email for confidential mode.');
+                    let parsedCustomExpiry: Date | undefined;
+                    if (enableTimeLimit) {
+                        const parsed = parseDateTimeLocal(customExpiryAt);
+                        if (!parsed) {
+                            throw new Error('Please choose a valid expiry date and time.');
                         }
+                        if (parsed <= new Date()) {
+                            throw new Error('Expiry time must be in the future.');
+                        }
+                        if (parsed > maxExpiryDate) {
+                            throw new Error('Expiry cannot be more than 10 days from now.');
+                        }
+                        parsedCustomExpiry = parsed;
                     }
 
                     const uploadResult = await storageEncryptionService.uploadEncryptedFile(selectedFile, {
                         passphrase: key,
-                        expiryDuration: enableConfidentialMode ? '30d' : '7d',
-                        confidentialMode: enableConfidentialMode,
-                        confidentialAccessDays: Math.min(10, Math.max(1, confidentialDays)),
-                        authorizedRecipientEmail: authorizedRecipientEmail.trim().toLowerCase(),
+                        enableTimeLimit,
+                        expiryDateOverride: parsedCustomExpiry,
+                        expiryDuration: enableTimeLimit ? 'custom' : 'none',
                     });
 
                     if (
@@ -318,7 +370,7 @@ export default function FileEncryptDecrypt({
                                         encryptOutputMode === 'managed' ? 'bg-primary-500 text-white' : textMuted
                                     }`}
                                 >
-                                    Managed (Share Link/QR/Email)
+                                    Managed (Platform Share/Email)
                                 </button>
                             </div>
                         </div>
@@ -326,57 +378,45 @@ export default function FileEncryptDecrypt({
 
                     {mode === 'encrypt' && encryptOutputMode === 'managed' && (
                         <div className={`rounded-xl border p-3 space-y-3 ${isDark ? 'bg-[#1E293B]/40 border-[#334155]' : 'bg-[#F8FCFA] border-[#CBD5E1]'}`}>
+                            <p className={`text-sm font-semibold ${textPrimary}`}>Time-Based File Expiry</p>
+                            <p className={`text-xs ${textMuted}`}>
+                                Enable if you want automatic deletion at a custom date/time.
+                            </p>
                             <div className="flex items-center justify-between gap-3">
-                                <div>
-                                    <p className={`text-sm font-semibold ${textPrimary}`}>Confidential Time-Lock</p>
-                                    <p className={`text-xs ${textMuted}`}>
-                                        Double protection with recipient authorization and website-only decrypt.
-                                    </p>
-                                </div>
+                                <p className={`text-xs font-medium ${textMuted}`}>Enable Time Limit</p>
                                 <button
                                     type="button"
-                                    onClick={() => setEnableConfidentialMode((v) => !v)}
+                                    onClick={() => setEnableTimeLimit((v) => !v)}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                                        enableConfidentialMode
+                                        enableTimeLimit
                                             ? 'bg-primary-500 text-white'
                                             : isDark
                                                 ? 'bg-[#0F172A] text-slate-300'
                                                 : 'bg-[#E4F3EC] text-[#334155]'
                                     }`}
                                 >
-                                    {enableConfidentialMode ? 'Enabled' : 'Disabled'}
+                                    {enableTimeLimit ? 'Enabled' : 'Disabled'}
                                 </button>
                             </div>
-
-                            {enableConfidentialMode && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                        <label className={`block text-xs font-medium mb-1 ${textMuted}`}>
-                                            Access Timer (Max 10 days)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            max={10}
-                                            value={confidentialDays}
-                                            onChange={(e) => setConfidentialDays(Math.min(10, Math.max(1, Number(e.target.value) || 1)))}
-                                            className="input-field py-2.5"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className={`block text-xs font-medium mb-1 ${textMuted}`}>
-                                            Authorized Recipient Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={authorizedRecipientEmail}
-                                            onChange={(e) => setAuthorizedRecipientEmail(e.target.value)}
-                                            placeholder="recipient@example.com"
-                                            className="input-field py-2.5"
-                                        />
-                                    </div>
-                                </div>
-                            )}
+                            <div>
+                                <label className={`block text-xs font-medium mb-1 ${textMuted}`}>
+                                    Expiry Date & Time (Max 10 days)
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    value={customExpiryAt}
+                                    min={minExpiry}
+                                    max={maxExpiry}
+                                    onChange={(e) => setCustomExpiryAt(e.target.value)}
+                                    disabled={!enableTimeLimit}
+                                    className="input-field py-2.5"
+                                />
+                                {!enableTimeLimit && (
+                                    <p className={`text-[11px] mt-1 ${textMuted}`}>
+                                        Time limit is disabled. File will be shared without auto-expiry.
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -387,6 +427,11 @@ export default function FileEncryptDecrypt({
                         </div>
                     )}
                     <div>
+                        <div className={`mb-3 p-3 rounded-xl border ${isDark ? 'bg-[#0F172A]/70 border-[#334155]' : 'bg-[#F8FCFA] border-[#CBD5E1]'}`}>
+                            <p className={`text-xs ${textMuted}`}>
+                                Trust check: encryption/decryption runs locally in your browser. The passphrase is never sent as plain text.
+                            </p>
+                        </div>
                         <div className="flex items-center gap-2 mb-2">
                             <p className={`text-sm font-medium ${textPrimary}`}>{keyLabel}</p>
                             <button
@@ -409,7 +454,10 @@ export default function FileEncryptDecrypt({
                                 <input
                                     type={showKey ? 'text' : 'password'}
                                     value={key}
-                                    onChange={(e) => setKey(e.target.value)}
+                                    onChange={(e) => {
+                                        setKey(e.target.value);
+                                        setConfirmKeyBackedUp(false);
+                                    }}
                                     placeholder={keyPlaceholder}
                                     className="input-field font-mono text-xs pr-10"
                                 />
@@ -432,6 +480,17 @@ export default function FileEncryptDecrypt({
                         <p className={`mt-2 text-xs ${textMuted}`}>
                             Recommended: click generate and share that key securely. You can also use a passphrase (8+ chars) and use the same passphrase for decryption.
                         </p>
+                        {mode === 'encrypt' && (
+                            <label className={`mt-3 inline-flex items-start gap-2 text-xs ${textMuted}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={confirmKeyBackedUp}
+                                    onChange={(e) => setConfirmKeyBackedUp(e.target.checked)}
+                                    className="mt-0.5 accent-primary-500"
+                                />
+                                <span>I have securely saved this key/passphrase and understand file recovery is not possible without it.</span>
+                            </label>
+                        )}
                     </div>
 
                     {embedded && showStepCards && (
@@ -498,7 +557,7 @@ export default function FileEncryptDecrypt({
                                 <div>
                                     <p className={`font-semibold ${textPrimary}`}>Encrypted Successfully</p>
                                     <p className={`text-sm ${textMuted}`}>
-                                        {managedResult.encryptedFileName} is ready. Download it now or share using secure link and QR.
+                                        {managedResult.encryptedFileName} is ready. Download it now or share using email, WhatsApp, Telegram, or device share.
                                     </p>
                                 </div>
                             </div>
@@ -510,7 +569,7 @@ export default function FileEncryptDecrypt({
                                 </button>
                                 <button onClick={() => setShowShareModal(true)} className="btn-secondary">
                                     <Share2 className="h-4 w-4 mr-2" />
-                                    Share Link / QR
+                                    Share via Apps
                                 </button>
                             </div>
                         </div>
@@ -528,6 +587,7 @@ export default function FileEncryptDecrypt({
                     expiryDate: managedResult.fileRecord.expiryDate,
                     hasPin: true,
                     downloadCount: managedResult.fileRecord.downloadCount,
+                    maxDownloads: managedResult.fileRecord.maxDownloads,
                     shareToken: managedResult.fileRecord.shareToken,
                     shareUrl: managedResult.fileRecord.shareUrl,
                 } : null}
@@ -535,3 +595,4 @@ export default function FileEncryptDecrypt({
         </div>
     );
 }
+

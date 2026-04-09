@@ -8,6 +8,7 @@ const footerLinks = {
         { name: 'Features', path: '/features' },
         { name: 'How It Works', path: '/how-it-works' },
         { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Vault Workspace', path: '/workspace' },
     ],
     legal: [
         { name: 'Privacy Policy', path: '/privacy' },

@@ -10,6 +10,7 @@ import {
     Home,
     Shield,
     LayoutDashboard,
+    Lock,
     HelpCircle,
 } from 'lucide-react';
 
@@ -35,6 +36,7 @@ export default function KeyboardShortcuts({ onNavigate, onToggleTheme }: Keyboar
         { keys: ['Ctrl', 'K'], description: 'Search files', icon: Search },
         { keys: ['Ctrl', 'U'], description: 'Upload file', icon: Upload },
         { keys: ['Ctrl', 'D'], description: 'Go to Dashboard', icon: LayoutDashboard, action: () => onNavigate('/dashboard') },
+        { keys: ['Ctrl', 'E'], description: 'Go to Vault Workspace', icon: Lock, action: () => onNavigate('/workspace') },
         { keys: ['Ctrl', 'H'], description: 'Go to Home', icon: Home, action: () => onNavigate('/') },
         { keys: ['Ctrl', 'S'], description: 'Go to Scanner', icon: Shield, action: () => onNavigate('/scanner') },
         { keys: ['Ctrl', 'T'], description: 'Toggle theme', icon: isDark ? Sun : Moon, action: onToggleTheme },
@@ -67,6 +69,10 @@ export default function KeyboardShortcuts({ onNavigate, onToggleTheme }: Keyboar
                 case 'h':
                     e.preventDefault();
                     onNavigate('/');
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    onNavigate('/workspace');
                     break;
                 case 's':
                     // Only capture if not in an input

@@ -74,17 +74,18 @@ export default function FileScanner() {
             <div className="scan-line-overlay" />
             <div style={{ position: 'relative', zIndex: 2, maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem', paddingTop: '7rem', flex: 1, width: '100%' }}>
                 
-                <div className="text-center mb-12">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-6 w-max mx-auto">
-                        <FileSearch size={16} className="text-primary-500" />
-                        <span className="text-sm font-medium text-primary-500">Advanced Scanner</span>
+                <div className="mb-12">
+                    <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center mt-1">
+                            <FileSearch size={24} className="text-primary-500" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-bold font-heading text-primary-500">File Scanner</h1>
+                            <p style={{ fontSize: '1.1rem', color: 'var(--cyber-muted)', marginTop: '0.5rem' }}>
+                                Built-in threat detection automatically scans your uploads for malicious signatures and vulnerabilities.
+                            </p>
+                        </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-bold font-heading mb-4 text-primary-500">
-                        File <span className="gradient-text">Scanner</span>
-                    </h1>
-                    <p style={{ fontSize: '1.1rem', color: 'var(--cyber-muted)', maxWidth: 600, margin: '0 auto' }}>
-                        Built-in threat detection automatically scans your uploads for malicious signatures and vulnerabilities.
-                    </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
