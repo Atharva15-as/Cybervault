@@ -32,6 +32,12 @@ const parseDateTimeLocal = (value: string): Date | null => {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const formatHashPreview = (hash?: string | null, visibleStart = 12, visibleEnd = 8): string => {
+    if (!hash) return '—';
+    if (hash.length <= visibleStart + visibleEnd) return hash;
+    return `${hash.slice(0, visibleStart)}...${hash.slice(-visibleEnd)}`;
+};
+
 interface FileEncryptDecryptProps {
     embedded?: boolean;
     showEmbeddedIntro?: boolean;
@@ -570,60 +576,13 @@ export default function FileEncryptDecrypt({
                                 </div>
 
                                 {/* Hash Value Row */}
-                                <div className={`flex items-center gap-2 rounded-lg px-3 py-2.5 mb-3 ${isDark ? 'bg-[#1E293B] border border-[#334155]' : 'bg-[#F1F5F9] border border-[#E2E8F0]'}`}>
-                                    <code className={`flex-1 text-[11px] font-mono break-all leading-relaxed ${isDark ? 'text-green-400' : 'text-green-700'}`}>
-                                        {managedResult.fileRecord.hash || '—'}
-                                    </code>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (managedResult.fileRecord.hash) {
-                                                navigator.clipboard.writeText(managedResult.fileRecord.hash);
-                                            }
-                                        }}
-                                        title="Copy SHA-256 hash"
-                                        className={`flex-shrink-0 p-1.5 rounded-md transition-colors ${isDark ? 'text-dark-400 hover:text-dark-200 hover:bg-white/10' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-200'}`}
+                                <div className={`flex items-center gap-2 rounded-lg px-3 py-2.5 ${isDark ? 'bg-[#1E293B] border border-[#334155]' : 'bg-[#F1F5F9] border border-[#E2E8F0]'}`}>
+                                    <code
+                                        title={managedResult.fileRecord.hash || undefined}
+                                        className={`flex-1 text-[11px] font-mono leading-relaxed ${isDark ? 'text-green-400' : 'text-green-700'}`}
                                     >
-                                        <Copy className="h-3.5 w-3.5" />
-                                    </button>
-                                </div>
-
-                                {/* Where it is stored */}
-                                <div className={`rounded-lg px-3 py-3 mb-3 border ${isDark ? 'bg-primary-500/5 border-primary-500/20' : 'bg-primary-50 border-primary-100'}`}>
-                                    <p className={`text-[11px] font-semibold uppercase tracking-wide mb-1.5 ${isDark ? 'text-primary-400' : 'text-primary-600'}`}>📦 Where this hash is stored</p>
-                                    <ul className={`space-y-1 text-xs ${textMuted}`}>
-                                        <li className="flex items-start gap-1.5">
-                                            <span className="text-primary-500 mt-0.5">•</span>
-                                            <span><strong className={textPrimary}>Supabase Database</strong> → table <code className="font-mono text-[11px] bg-primary-500/10 px-1 rounded">shared_files</code> → column <code className="font-mono text-[11px] bg-primary-500/10 px-1 rounded">file_hash</code></span>
-                                        </li>
-                                        <li className="flex items-start gap-1.5">
-                                            <span className="text-primary-500 mt-0.5">•</span>
-                                            <span>Computed <strong className={textPrimary}>before encryption</strong> — this is the SHA-256 of your <em>original</em> file bytes.</span>
-                                        </li>
-                                        <li className="flex items-start gap-1.5">
-                                            <span className="text-primary-500 mt-0.5">•</span>
-                                            <span>Linked to file record ID: <code className="font-mono text-[11px] bg-primary-500/10 px-1 rounded">{managedResult.fileId}</code></span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                {/* What it means */}
-                                <div className={`rounded-lg px-3 py-3 border ${isDark ? 'bg-[#1E293B]/50 border-[#334155]' : 'bg-[#F8FAFC] border-[#E2E8F0]'}`}>
-                                    <p className={`text-[11px] font-semibold uppercase tracking-wide mb-1.5 ${isDark ? 'text-dark-400' : 'text-gray-400'}`}>🔍 What this means</p>
-                                    <div className={`space-y-1.5 text-xs ${textMuted}`}>
-                                        <div className="flex items-start gap-1.5">
-                                            <span className="text-green-500 mt-0.5">✓</span>
-                                            <span><strong className={textPrimary}>Original file hash</strong> (<code className="font-mono text-[11px]">file_hash</code>) — proves your file existed in this exact state before encryption.</span>
-                                        </div>
-                                        <div className="flex items-start gap-1.5">
-                                            <span className="text-cyan-500 mt-0.5">✓</span>
-                                            <span><strong className={textPrimary}>Encrypted file hash</strong> (<code className="font-mono text-[11px]">encrypted_hash</code>) — separately stored to detect any tampering of the encrypted blob during storage or transit.</span>
-                                        </div>
-                                        <div className="flex items-start gap-1.5">
-                                            <span className="text-amber-500 mt-0.5">✓</span>
-                                            <span>On download, CyberVault re-computes both hashes and compares — if they don't match, the download is <strong className="text-red-400">rejected</strong>.</span>
-                                        </div>
-                                    </div>
+                                        {formatHashPreview(managedResult.fileRecord.hash)}
+                                    </code>
                                 </div>
                             </div>
                             {/* ── End Hash Info Panel ── */}
@@ -662,4 +621,3 @@ export default function FileEncryptDecrypt({
         </div>
     );
 }
-

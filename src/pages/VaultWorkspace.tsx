@@ -4,8 +4,6 @@ import {
     RefreshCw,
     File as FileIcon,
     Download,
-    Share2,
-    CheckCircle,
     Link as LinkIcon,
     Trash2,
     ShieldCheck,
@@ -40,24 +38,6 @@ export default function VaultWorkspace() {
         maxDownloads: number;
         shareToken: string;
         shareUrl: string;
-    } | null>(null);
-    const [latestEncrypted, setLatestEncrypted] = useState<{
-        fileId: string;
-        encryptedBlob: Blob;
-        encryptedFileName: string;
-        passphrase: string;
-        shareToken: string;
-        shareUrl: string;
-        fileRecord: {
-            id: string;
-            fileName: string;
-            hash: string;
-            expiryDate: Date;
-            downloadCount: number;
-            maxDownloads: number;
-            shareToken: string;
-            shareUrl: string;
-        };
     } | null>(null);
 
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
@@ -102,36 +82,8 @@ export default function VaultWorkspace() {
         return filteredAndSortedFiles.slice(0, 5);
     }, [filteredAndSortedFiles, showAllFiles]);
 
-    const handleManagedEncryptSuccess = async (payload: {
-        fileId: string;
-        encryptedBlob: Blob;
-        encryptedFileName: string;
-        passphrase: string;
-        shareToken: string;
-        shareUrl: string;
-        fileRecord: {
-            id: string;
-            fileName: string;
-            hash: string;
-            expiryDate: Date;
-            downloadCount: number;
-            maxDownloads: number;
-            shareToken: string;
-            shareUrl: string;
-        };
-    }) => {
-        setLatestEncrypted(payload);
+    const handleManagedEncryptSuccess = async () => {
         await loadFiles(true);
-    };
-
-    const downloadEncryptedNow = () => {
-        if (!latestEncrypted) return;
-        const url = URL.createObjectURL(latestEncrypted.encryptedBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = latestEncrypted.encryptedFileName;
-        a.click();
-        URL.revokeObjectURL(url);
     };
 
     const toShareModalFile = (file: StorageFile) => {
@@ -269,48 +221,6 @@ export default function VaultWorkspace() {
                                 enableManagedEncrypt
                                 onManagedEncryptSuccess={handleManagedEncryptSuccess}
                             />
-
-                            {latestEncrypted && (
-                                <div className={`mt-6 rounded-xl border p-4 md:p-5 ${isDark ? 'bg-[#1E293B]/40 border-[#334155]' : 'bg-[#F8FCFA] border-[#CBD5E1]'}`}>
-                                    <div className="flex items-start gap-3 mb-4">
-                                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                                        <div>
-                                            <p className={`font-semibold ${textPrimary}`}>Encrypted Successfully</p>
-                                            <p className={`text-sm ${textMuted}`}>
-                                                {latestEncrypted.encryptedFileName} is ready. Download it now or share using email, WhatsApp, Telegram, or device share.
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-3">
-                                        <button onClick={downloadEncryptedNow} className="btn-primary">
-                                            <Download className="h-4 w-4 mr-2" />
-                                            Download .enc
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (!latestEncrypted) return;
-                                                setShareFile({
-                                                    id: latestEncrypted.fileRecord.id,
-                                                    name: latestEncrypted.fileRecord.fileName,
-                                                    hash: latestEncrypted.fileRecord.hash,
-                                                    expiryDate: latestEncrypted.fileRecord.expiryDate,
-                                                    hasPin: true,
-                                                    downloadCount: latestEncrypted.fileRecord.downloadCount,
-                                                    maxDownloads: latestEncrypted.fileRecord.maxDownloads,
-                                                    shareToken: latestEncrypted.fileRecord.shareToken,
-                                                    shareUrl: latestEncrypted.fileRecord.shareUrl,
-                                                });
-                                                setShowShareModal(true);
-                                            }}
-                                            className="btn-secondary"
-                                        >
-                                            <Share2 className="h-4 w-4 mr-2" />
-                                            Share via Apps
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </section>
