@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     X,
     Check,
@@ -38,11 +38,12 @@ interface ShareModalProps {
     isOpen: boolean;
     onClose: () => void;
     file: ShareFile | null;
+    preferredTop?: number;
     onShareCreated?: (shareData: { token: string; url: string }) => void;
     onRevoke?: (fileId: string) => void;
 }
 
-export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRevoke }: ShareModalProps) {
+export default function ShareModal({ isOpen, onClose, file, preferredTop, onShareCreated, onRevoke }: ShareModalProps) {
     const { theme } = useTheme();
     const { addToast } = useToast();
     const isDark = theme === 'dark';
@@ -66,14 +67,22 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
     const textPrimary = isDark ? 'text-white' : 'text-[#0F172A]';
     const textMuted = isDark ? 'text-dark-400' : 'text-[#64748B]';
 
+    // Keep a stable ref to the latest onShareCreated callback so we can
+    // call it inside useEffect without adding it to the dependency array
+    // (parent components don't memoize it, which caused an infinite loop).
+    const onShareCreatedRef = useRef(onShareCreated);
+    useEffect(() => {
+        onShareCreatedRef.current = onShareCreated;
+    }, [onShareCreated]);
+
     useEffect(() => {
         if (isOpen && file) {
             const token = file.shareToken || generateShareToken();
             const url = `${window.location.origin}/share/${token}`;
             setShareUrl(url);
 
-            if (onShareCreated) {
-                onShareCreated({ token, url });
+            if (onShareCreatedRef.current) {
+                onShareCreatedRef.current({ token, url });
             }
 
             // Reset state
@@ -86,7 +95,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
             setSavingMaxDownloads(false);
             setActiveTab('platforms');
         }
-    }, [isOpen, file, onShareCreated]);
+    }, [isOpen, file]);
 
     const handleSaveLinkPassword = async () => {
         if (!file) return;
@@ -129,19 +138,31 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
     const handleEmailShare = () => {
         if (emailList.length === 0) return;
 
-        const subject = encodeURIComponent(`Secure File Share: ${file?.name}`);
-        const body = encodeURIComponent(
+        const subjectRaw = `Secure File Share: ${file?.name}`;
+        const bodyRaw =
             `I'm sharing a secure encrypted file with you via CyberVault.\n\n` +
                 `File: ${file?.name}\n` +
                 `Access Link: ${shareUrl}\n` +
                 `Access Role: ${emailRole === 'viewer' ? 'View & Download' : 'Full Access'}\n\n` +
                 `You will need the encryption passphrase to decrypt this file. ` +
                 `The passphrase will be shared with you separately for security.\n\n` +
-                `This file is protected with AES-256-GCM end-to-end encryption.`
-        );
+                `This file is protected with AES-256-GCM end-to-end encryption.`;
 
-        const mailto = `mailto:${emailList.join(',')}?subject=${subject}&body=${body}`;
-        window.open(mailto, '_blank');
+        const subject = encodeURIComponent(subjectRaw);
+        const body = encodeURIComponent(bodyRaw);
+        const recipients = emailList.join(',');
+
+        // Prefer Gmail compose (web) to avoid blank pages when mailto
+        // handlers are not configured in the browser.
+        const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipients)}&su=${subject}&body=${body}`;
+        const popup = window.open(gmailComposeUrl, '_blank', 'noopener,noreferrer');
+
+        // Fallback to default mail client if popups are blocked.
+        if (!popup) {
+            const mailto = `mailto:${recipients}?subject=${subject}&body=${body}`;
+            window.location.href = mailto;
+        }
+
         setEmailSent(true);
         setTimeout(() => setEmailSent(false), 3000);
     };
@@ -220,6 +241,8 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
     const timeRemaining = formatTimeRemaining(file.expiryDate);
     const isExpired = timeRemaining === 'Expired';
 
+    const resolvedTop = Math.max(64, Math.min(preferredTop ?? 112, 320));
+
     return (
         <>
             {/* Professional Backdrop */}
@@ -228,12 +251,15 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated, onRe
                 className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" 
             />
             
-            {/* Professional Modal - centered & wider */}
-            <div className={`absolute left-1/2 top-[32%] -translate-x-1/2 -translate-y-1/2 z-50 rounded-2xl w-[900px] max-h-[80vh] overflow-y-auto shadow-2xl border ${
+            {/* Professional Modal - anchored below navbar */}
+            <div
+                style={{ top: `${resolvedTop}px` }}
+                className={`fixed left-1/2 -translate-x-1/2 z-50 rounded-2xl w-[900px] max-h-[80vh] overflow-y-auto shadow-2xl border ${
                 isDark 
                     ? 'bg-[#0F172A] border-[#334155]' 
                     : 'bg-white border-[#E2E8F0]'
-            }`}>
+            }`}
+            >
                 {/* Header */}
                 <div className={`sticky top-0 flex items-center justify-between p-6 border-b ${
                     isDark 

@@ -11,15 +11,14 @@
  * - Stream processing for large files
  */
 
+const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const { createClient } = require('@supabase/supabase-js');
-
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const path = require('path');
 const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
 const encryption = require('./utils/encryption');
 
 // ==================== CONFIGURATION ====================
@@ -260,7 +259,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         );
 
         // Generate file ID
-        const fileId = uuidv4();
+        const fileId = crypto.randomUUID();
         const encryptedFileName = `${fileId}.enc`;
         const encryptedFilePath = path.join(uploadsDir, encryptedFileName);
 
@@ -396,7 +395,6 @@ app.post('/decrypt', async (req, res) => {
             const encryptedData = cipherTextWithTag.slice(0, cipherTextWithTag.length - 16);
 
             // Derive key using PBKDF2 (matching encryptionService.ts)
-            const crypto = require('crypto');
             const key = crypto.pbkdf2Sync(password, salt, 600000, 32, 'sha256');
 
             // Decrypt using AES-256-GCM

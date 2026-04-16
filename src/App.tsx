@@ -23,6 +23,7 @@ const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+
 const SharedFile = lazy(() => import('./pages/SharedFile'));
 const AdminReports = lazy(() => import('./pages/admin/Reports'));
 const Communities = lazy(() => import('./pages/Communities'));
@@ -109,6 +110,7 @@ function AppContent() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
+
                             <Route path="/share/:token" element={<SharedFile />} />
                             {/* Admin Routes - Protected */}
                             <Route

@@ -30,6 +30,13 @@ export default function Login() {
     const [socialLoading, setSocialLoading] = useState<'google' | 'github' | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const clearPasswordField = () => {
+        setFormData(prev => ({
+            ...prev,
+            password: '',
+        }));
+        setShowPassword(false);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -77,6 +84,8 @@ export default function Login() {
             const { error: authError } = await signIn(formData.email, formData.password, formData.rememberMe);
 
             if (authError) {
+                clearPasswordField();
+
                 // Handle specific auth errors
                 if (authError.message.includes('Invalid login credentials')) {
                     setError('Invalid email or password. Please try again.');
@@ -109,6 +118,7 @@ export default function Login() {
                 navigate(redirectPath);
             }, 500);
         } catch (err) {
+            clearPasswordField();
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
             setError(errorMessage);
             addToast({ type: 'error', title: 'Error', message: errorMessage });

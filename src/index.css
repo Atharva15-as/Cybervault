@@ -87,7 +87,9 @@
 
     /* Glass Card — Dark Mode */
     .glass-card {
-        @apply backdrop-blur-xl rounded-2xl;
+        @apply rounded-2xl;
+        -webkit-backdrop-filter: blur(24px);
+        backdrop-filter: blur(24px);
         background-color: rgba(30, 41, 59, 0.8);
         border: 1.5px solid rgba(16, 185, 129, 0.25);
         box-shadow:
@@ -98,7 +100,9 @@
 
     /* Glass Card — Light Mode */
     .light .glass-card {
-        @apply backdrop-blur-xl rounded-2xl;
+        @apply rounded-2xl;
+        -webkit-backdrop-filter: blur(24px);
+        backdrop-filter: blur(24px);
         background-color: rgba(249, 254, 252, 0.95);
         border: 1.5px solid rgba(16, 185, 129, 0.2);
         box-shadow:

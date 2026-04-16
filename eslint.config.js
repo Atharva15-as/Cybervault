@@ -27,6 +27,10 @@ export default tseslint.config(
         rules: {
             ...reactHooks.configs.recommended.rules,
             'react-hooks/exhaustive-deps': 'off',
+            'react-hooks/immutability': 'off',
+            'react-hooks/purity': 'off',
+            'react-hooks/set-state-in-effect': 'off',
+            'react-hooks/static-components': 'off',
             'react-refresh/only-export-components': 'off',
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-vars': [

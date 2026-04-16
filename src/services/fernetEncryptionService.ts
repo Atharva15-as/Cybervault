@@ -103,10 +103,11 @@ export const fernetEncryptionService = {
         );
 
         // Derive key using PBKDF2 with 100,000 iterations
+        const saltBytes = new Uint8Array(salt);
         const key = await crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
-                salt: salt,
+                salt: saltBytes,
                 iterations: 100000, // Matching Python implementation
                 hash: 'SHA-256',
             },
@@ -165,7 +166,7 @@ export const fernetEncryptionService = {
             const isValid = await crypto.subtle.verify(
                 'HMAC',
                 hmacKey,
-                hmacToVerify,
+                new Uint8Array(hmacToVerify),
                 data
             );
 
@@ -301,12 +302,13 @@ export const fernetEncryptionService = {
         onProgress?.('Verifying HMAC...', 50);
 
         // Compute HMAC for verification
-        const hmacComputed = await this.generateHMAC(key, encryptedContent.buffer);
+        const encryptedContentBuffer = new Uint8Array(encryptedContent).buffer;
+        const hmacComputed = await this.generateHMAC(key, encryptedContentBuffer);
 
         console.log('Computed HMAC (checksum):', this.bufferToHex(hmacComputed));
 
         // Verify HMAC
-        const isValid = await this.verifyHMAC(key, encryptedContent.buffer, hmacStored);
+        const isValid = await this.verifyHMAC(key, encryptedContentBuffer, hmacStored);
 
         if (!isValid) {
             throw new Error(
@@ -320,9 +322,9 @@ export const fernetEncryptionService = {
         let decryptedData: ArrayBuffer;
         try {
             decryptedData = await crypto.subtle.decrypt(
-                { name: 'AES-CBC', iv: iv },
+                { name: 'AES-CBC', iv: new Uint8Array(iv) },
                 key,
-                encryptedContent.buffer
+                encryptedContentBuffer
             );
         } catch (error) {
             throw new Error('Decryption failed. Invalid password or corrupted file.');
@@ -452,7 +454,8 @@ export const fernetEncryptionService = {
         onProgress?.('Verifying HMAC...', 50);
 
         // Verify HMAC
-        const isValid = await this.verifyHMAC(key, encryptedContent.buffer, hmacStored);
+        const encryptedContentBuffer = new Uint8Array(encryptedContent).buffer;
+        const isValid = await this.verifyHMAC(key, encryptedContentBuffer, hmacStored);
 
         if (!isValid) {
             throw new Error('Data integrity check failed');
@@ -462,9 +465,9 @@ export const fernetEncryptionService = {
 
         // Decrypt
         const decryptedData = await crypto.subtle.decrypt(
-            { name: 'AES-CBC', iv: iv },
+            { name: 'AES-CBC', iv: new Uint8Array(iv) },
             key,
-            encryptedContent.buffer
+            encryptedContentBuffer
         );
 
         onProgress?.('Decryption complete!', 100);

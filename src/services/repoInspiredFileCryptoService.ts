@@ -59,9 +59,10 @@ async function importAesKey(keyString: string, usage: KeyUsage[]): Promise<Crypt
         keyBytes = new Uint8Array(hash);
     }
 
+    const normalizedKeyBytes = new Uint8Array(keyBytes);
     return crypto.subtle.importKey(
         'raw',
-        keyBytes,
+        normalizedKeyBytes,
         { name: 'AES-GCM', length: 256 },
         false,
         usage
@@ -92,10 +93,11 @@ export const repoInspiredFileCryptoService = {
         payload.set(metadata, 4);
         payload.set(fileBytes, 4 + metadata.length);
 
+        const payloadBytes = new Uint8Array(payload);
         const encrypted = await crypto.subtle.encrypt(
             { name: 'AES-GCM', iv },
             key,
-            payload.buffer
+            payloadBytes
         );
 
         const encryptedBytes = new Uint8Array(encrypted);
@@ -128,7 +130,7 @@ export const repoInspiredFileCryptoService = {
             decrypted = await crypto.subtle.decrypt(
                 { name: 'AES-GCM', iv },
                 key,
-                ciphertext
+                new Uint8Array(ciphertext)
             );
         } catch {
             throw new Error('Decryption failed. Please check key and encrypted file.');

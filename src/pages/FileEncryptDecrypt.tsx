@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { MouseEvent, useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import repoInspiredFileCryptoService from '../services/repoInspiredFileCryptoService';
@@ -77,6 +77,7 @@ export default function FileEncryptDecrypt({
     const [showKey, setShowKey] = useState(false);
     const [confirmKeyBackedUp, setConfirmKeyBackedUp] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [shareModalTop, setShareModalTop] = useState<number | undefined>(undefined);
     const [enableTimeLimit, setEnableTimeLimit] = useState(true);
     const [customExpiryAt, setCustomExpiryAt] = useState(() => {
         const now = new Date();
@@ -267,6 +268,14 @@ export default function FileEncryptDecrypt({
     const downloadEncryptedNow = () => {
         if (!managedResult) return;
         downloadBlob(managedResult.encryptedBlob, managedResult.encryptedFileName);
+    };
+
+    const openShareModalAtButton = (event: MouseEvent<HTMLButtonElement>) => {
+        const buttonRect = event.currentTarget.getBoundingClientRect();
+        // Keep header visible while opening close to where the user clicked.
+        const nextTop = buttonRect.top - 70;
+        setShareModalTop(nextTop);
+        setShowShareModal(true);
     };
 
     return (
@@ -593,13 +602,14 @@ export default function FileEncryptDecrypt({
                                     Download .enc
                                 </button>
                                 <div className="relative">
-                                    <button onClick={() => setShowShareModal(true)} className="btn-secondary">
+                                    <button onClick={openShareModalAtButton} className="btn-secondary">
                                         <Share2 className="h-4 w-4 mr-2" />
                                         Share via Apps
                                     </button>
                                     <ShareModal
                                         isOpen={showShareModal}
                                         onClose={() => setShowShareModal(false)}
+                                        preferredTop={shareModalTop}
                                         file={managedResult ? {
                                             id: managedResult.fileRecord.id,
                                             name: managedResult.fileRecord.fileName,
