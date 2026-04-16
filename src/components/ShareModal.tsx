@@ -78,7 +78,7 @@ export default function ShareModal({ isOpen, onClose, file, preferredTop, onShar
     useEffect(() => {
         if (isOpen && file) {
             const token = file.shareToken || generateShareToken();
-            const url = `${window.location.origin}/share/${token}`;
+            const url = storageEncryptionService.getAppShareUrl(token);
             setShareUrl(url);
 
             if (onShareCreatedRef.current) {

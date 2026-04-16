@@ -52,11 +52,11 @@ const FALLBACK_STORAGE_BUCKETS = ['encrypted-files', 'user-files', 'encrypted_fi
 export const storageEncryptionService = {
     getAppShareUrl(shareToken: string): string {
         if (typeof window !== 'undefined' && window.location?.origin) {
-            return `${window.location.origin}/share/${shareToken}`;
+            return `${window.location.origin}/s/${shareToken}`;
         }
 
         const fallbackOrigin = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
-        return `${fallbackOrigin.replace(/\/$/, '')}/share/${shareToken}`;
+        return `${fallbackOrigin.replace(/\/$/, '')}/s/${shareToken}`;
     },
 
     resolveBucketCandidates(): string[] {
@@ -504,6 +504,58 @@ export const storageEncryptionService = {
         }
     },
 
+    async downloadEncryptedPackage(
+        shareToken: string
+    ): Promise<{
+        success: boolean;
+        blob?: Blob;
+        fileName?: string;
+        error?: Error;
+    }> {
+        try {
+            const { data: fileRecord, error: dbError } = await supabase
+                .from('shared_files')
+                .select('*')
+                .eq('share_token', shareToken)
+                .eq('is_active', true)
+                .single();
+
+            if (dbError || !fileRecord) {
+                throw new Error('File not found or has been deactivated');
+            }
+
+            if (new Date(fileRecord.expiry_date) < new Date()) {
+                throw new Error('This file link has expired');
+            }
+
+            if (fileRecord.max_downloads > 0 && fileRecord.download_count >= fileRecord.max_downloads) {
+                throw new Error('Download limit reached for this file');
+            }
+
+            const { data: encryptedData } = await this.downloadFromAvailableBucket(fileRecord.storage_path);
+
+            await supabase
+                .from('shared_files')
+                .update({
+                    download_count: fileRecord.download_count + 1,
+                    last_accessed: new Date().toISOString(),
+                })
+                .eq('id', fileRecord.id);
+
+            return {
+                success: true,
+                blob: encryptedData,
+                fileName: this.toEncFileName(fileRecord.file_name),
+            };
+        } catch (error) {
+            console.error('Encrypted package download error:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error : new Error(String(error)),
+            };
+        }
+    },
+
     async setLinkPassword(fileId: string, password: string | null): Promise<{
         success: boolean;
         error?: Error;
@@ -567,7 +619,7 @@ export const storageEncryptionService = {
     /**
      * Generate a random share token
      */
-    generateShareToken(length = 20): string {
+    generateShareToken(length = 12): string {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let token = '';
         const values = new Uint8Array(length);

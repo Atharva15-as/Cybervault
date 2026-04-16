@@ -112,6 +112,7 @@ function AppContent() {
                             <Route path="/forgot-password" element={<ForgotPassword />} />
 
                             <Route path="/share/:token" element={<SharedFile />} />
+                            <Route path="/s/:token" element={<SharedFile />} />
                             {/* Admin Routes - Protected */}
                             <Route
                                 path="/admin/reports"

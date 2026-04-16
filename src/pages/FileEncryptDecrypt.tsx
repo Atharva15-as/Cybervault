@@ -1,10 +1,9 @@
-import { MouseEvent, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import repoInspiredFileCryptoService from '../services/repoInspiredFileCryptoService';
 import { CircleHelp, Copy, Database, Download, Eye, EyeOff, Lock, RefreshCw, Share2, ShieldCheck, Unlock, Upload } from 'lucide-react';
 import storageEncryptionService, { UploadedFileRecord } from '../services/storageEncryptionService';
-import ShareModal from '../components/ShareModal';
 import { encryptionService } from '../services/encryptionService';
 
 type Mode = 'encrypt' | 'decrypt';
@@ -76,8 +75,6 @@ export default function FileEncryptDecrypt({
     const [showKeyHelp, setShowKeyHelp] = useState(false);
     const [showKey, setShowKey] = useState(false);
     const [confirmKeyBackedUp, setConfirmKeyBackedUp] = useState(false);
-    const [showShareModal, setShowShareModal] = useState(false);
-    const [shareModalTop, setShareModalTop] = useState<number | undefined>(undefined);
     const [enableTimeLimit, setEnableTimeLimit] = useState(true);
     const [customExpiryAt, setCustomExpiryAt] = useState(() => {
         const now = new Date();
@@ -270,12 +267,19 @@ export default function FileEncryptDecrypt({
         downloadBlob(managedResult.encryptedBlob, managedResult.encryptedFileName);
     };
 
-    const openShareModalAtButton = (event: MouseEvent<HTMLButtonElement>) => {
-        const buttonRect = event.currentTarget.getBoundingClientRect();
-        // Keep header visible while opening close to where the user clicked.
-        const nextTop = buttonRect.top - 70;
-        setShareModalTop(nextTop);
-        setShowShareModal(true);
+    const copyShareLink = async () => {
+        if (!managedResult) return;
+        await navigator.clipboard.writeText(managedResult.shareUrl);
+        addToast({
+            type: 'success',
+            title: 'Link Copied',
+            message: 'Short share link copied. Send this link to the receiver.',
+        });
+    };
+
+    const openShareLink = () => {
+        if (!managedResult) return;
+        window.open(managedResult.shareUrl, '_blank', 'noopener,noreferrer');
     };
 
     return (
@@ -385,7 +389,7 @@ export default function FileEncryptDecrypt({
                                         encryptOutputMode === 'managed' ? 'bg-primary-500 text-white' : textMuted
                                     }`}
                                 >
-                                    Managed (Platform Share/Email)
+                                    Managed (Share Link)
                                 </button>
                             </div>
                         </div>
@@ -572,7 +576,7 @@ export default function FileEncryptDecrypt({
                                 <div>
                                     <p className={`font-semibold ${textPrimary}`}>Encrypted Successfully</p>
                                     <p className={`text-sm ${textMuted}`}>
-                                        {managedResult.encryptedFileName} is ready. Download it now or share using email, WhatsApp, Telegram, or device share.
+                                        {managedResult.encryptedFileName} is ready. Share the short link to deliver the encrypted file.
                                     </p>
                                 </div>
                             </div>
@@ -596,33 +600,31 @@ export default function FileEncryptDecrypt({
                             </div>
                             {/* ── End Hash Info Panel ── */}
 
+                            <div className={`rounded-xl border p-4 mb-4 ${isDark ? 'bg-[#0F172A]/60 border-[#334155]' : 'bg-white border-[#CBD5E1]'}`}>
+                                <p className={`text-sm font-semibold mb-2 ${textPrimary}`}>Secure Share Link</p>
+                                <div className={`flex items-center gap-2 rounded-lg px-3 py-2.5 ${isDark ? 'bg-[#1E293B] border border-[#334155]' : 'bg-[#F1F5F9] border border-[#E2E8F0]'}`}>
+                                    <code className={`flex-1 text-[11px] font-mono leading-relaxed truncate ${isDark ? 'text-cyan-300' : 'text-cyan-800'}`}>
+                                        {managedResult.shareUrl}
+                                    </code>
+                                </div>
+                                <p className={`text-[11px] mt-2 ${textMuted}`}>
+                                    Receiver opens this link, downloads encrypted `.enc`, then decrypts in CyberVault tool.
+                                </p>
+                            </div>
+
                             <div className="flex flex-wrap gap-3 relative">
                                 <button onClick={downloadEncryptedNow} className="btn-primary">
                                     <Download className="h-4 w-4 mr-2" />
                                     Download .enc
                                 </button>
-                                <div className="relative">
-                                    <button onClick={openShareModalAtButton} className="btn-secondary">
-                                        <Share2 className="h-4 w-4 mr-2" />
-                                        Share via Apps
-                                    </button>
-                                    <ShareModal
-                                        isOpen={showShareModal}
-                                        onClose={() => setShowShareModal(false)}
-                                        preferredTop={shareModalTop}
-                                        file={managedResult ? {
-                                            id: managedResult.fileRecord.id,
-                                            name: managedResult.fileRecord.fileName,
-                                            hash: managedResult.fileRecord.hash,
-                                            expiryDate: managedResult.fileRecord.expiryDate,
-                                            hasPin: true,
-                                            downloadCount: managedResult.fileRecord.downloadCount,
-                                            maxDownloads: managedResult.fileRecord.maxDownloads,
-                                            shareToken: managedResult.fileRecord.shareToken,
-                                            shareUrl: managedResult.fileRecord.shareUrl,
-                                        } : null}
-                                    />
-                                </div>
+                                <button onClick={copyShareLink} className="btn-secondary">
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Share with Link
+                                </button>
+                                <button onClick={openShareLink} className="btn-secondary">
+                                    <Share2 className="h-4 w-4 mr-2" />
+                                    Open Link
+                                </button>
                             </div>
                         </div>
                     )}
