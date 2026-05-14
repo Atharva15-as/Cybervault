@@ -1,5 +1,4 @@
 import {
-    UserPlus,
     Upload,
     Lock,
     Database,
@@ -15,74 +14,74 @@ import { useTheme } from '../context/ThemeContext';
 const steps = [
     {
         number: '01',
-        icon: UserPlus,
-        title: 'User Registration & Login',
-        description: 'Create a secure account with email verification. Your credentials are hashed using bcrypt for maximum security.',
+        icon: Upload,
+        title: 'Choose the File to Protect',
+        description: 'Start by selecting the file you want to secure. The encryption workflow begins in your browser before the file is shared.',
         details: [
-            'Email verification required',
-            'Strong password requirements',
-            'Optional two-factor authentication',
-            'Secure session management',
+            'Single file selection flow',
+            'Works directly from your device',
+            'Original file stays readable until encryption starts',
+            'Built for quick secure sharing',
         ],
     },
     {
         number: '02',
-        icon: Upload,
-        title: 'File Upload',
-        description: 'Select files from your device to upload. Files are prepared for encryption before leaving your browser.',
+        icon: Key,
+        title: 'Generate or Enter a Secret Key',
+        description: 'Create a strong vault key or use your own passphrase. This same key is required later to decrypt the file.',
         details: [
-            'Drag & drop interface',
-            'Multiple file support',
-            'File type validation',
-            'Size limit up to 500MB',
+            'Generate a fresh key instantly',
+            'Custom passphrase supported',
+            'Minimum 8 characters',
+            'You must back it up safely',
         ],
     },
     {
         number: '03',
         icon: Lock,
-        title: 'Encryption Process',
-        description: 'Files are encrypted client-side using AES-256. The encryption key is then encrypted with RSA public key.',
+        title: 'Encrypt in the Browser',
+        description: 'CyberVault encrypts the file on the client side so the protected `.enc` file is created before secure delivery.',
         details: [
             'AES-256-GCM encryption',
-            'RSA-2048 key wrapping',
             'Client-side processing',
+            'Passphrase never sent as plain text',
             'Zero-knowledge design',
         ],
     },
     {
         number: '04',
         icon: Database,
-        title: 'Secure Storage',
-        description: 'Encrypted files are stored in our cloud infrastructure with redundancy and protection against data loss.',
+        title: 'Upload the Encrypted File',
+        description: 'The encrypted output is uploaded in protected form, and CyberVault prepares a short share link plus integrity metadata.',
         details: [
             'Encrypted at rest',
-            'Geographic redundancy',
-            'Regular backups',
-            'Access logging',
+            'SHA-256 fingerprint recorded',
+            'Short share URL generated',
+            'Optional expiry window',
         ],
     },
     {
         number: '05',
         icon: Link2,
-        title: 'Token-Based File Sharing',
-        description: 'Generate secure, time-limited download links. Share with specific users or anyone with the link.',
+        title: 'Send the Link and Key Separately',
+        description: 'Share the generated link so the receiver can download the encrypted file, and send the secret key through a trusted separate channel.',
         details: [
-            'Unique token generation',
-            'Configurable expiry time',
-            'Download limit options',
-            'Revocable access',
+            'Receiver gets only the `.enc` file from the link',
+            'Key should be shared separately',
+            'Expiry can be time-limited',
+            'Access stays controlled',
         ],
     },
     {
         number: '06',
         icon: Download,
-        title: 'Secure Download & Expiry',
-        description: 'Recipients download and decrypt files seamlessly. Links expire automatically after the set duration.',
+        title: 'Receiver Downloads and Decrypts',
+        description: 'The receiver downloads the encrypted file, enters the shared key in CyberVault, and restores the original file after integrity checks pass.',
         details: [
-            'Automatic decryption',
+            'Encrypted `.enc` download',
+            'Manual key entry for decryption',
             'Integrity verification',
-            'Secure delivery',
-            'Activity logging',
+            'Original file recovered locally',
         ],
     },
 ];
@@ -111,7 +110,7 @@ export default function HowItWorks() {
                         <span className="gradient-text">Protects Your Files</span>
                     </h1>
                     <p className={`section-subtitle mt-4 ${textMuted}`}>
-                        Understanding the complete journey of your files from upload to secure sharing.
+                        Follow the real CyberVault flow from file selection and key creation to encrypted sharing and safe recovery.
                     </p>
                 </div>
 
@@ -120,11 +119,12 @@ export default function HowItWorks() {
                     <div className="glass-card p-8">
                         <div className="flex flex-wrap justify-center items-center gap-4 text-center">
                             {[
-                                { icon: Upload, label: 'Upload' },
+                                { icon: Upload, label: 'Choose File' },
+                                { icon: Key, label: 'Create Key' },
                                 { icon: Lock, label: 'Encrypt' },
-                                { icon: Database, label: 'Store' },
+                                { icon: Database, label: 'Upload' },
                                 { icon: Link2, label: 'Share' },
-                                { icon: Download, label: 'Download' },
+                                { icon: Download, label: 'Decrypt' },
                             ].map((item, index, arr) => (
                                 <div key={item.label} className="flex items-center gap-4">
                                     <div className="flex flex-col items-center gap-2">

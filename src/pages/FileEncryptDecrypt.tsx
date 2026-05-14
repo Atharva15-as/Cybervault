@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import repoInspiredFileCryptoService from '../services/repoInspiredFileCryptoService';
-import { CircleHelp, Copy, Database, Download, Eye, EyeOff, Lock, RefreshCw, Share2, ShieldCheck, Unlock, Upload } from 'lucide-react';
+import { CircleHelp, Copy, Database, Download, Eye, EyeOff, Lock, RefreshCw, ShieldCheck, Unlock, Upload } from 'lucide-react';
 import storageEncryptionService, { UploadedFileRecord } from '../services/storageEncryptionService';
 import { encryptionService } from '../services/encryptionService';
 
@@ -265,21 +265,6 @@ export default function FileEncryptDecrypt({
     const downloadEncryptedNow = () => {
         if (!managedResult) return;
         downloadBlob(managedResult.encryptedBlob, managedResult.encryptedFileName);
-    };
-
-    const copyShareLink = async () => {
-        if (!managedResult) return;
-        await navigator.clipboard.writeText(managedResult.shareUrl);
-        addToast({
-            type: 'success',
-            title: 'Link Copied',
-            message: 'Short share link copied. Send this link to the receiver.',
-        });
-    };
-
-    const openShareLink = () => {
-        if (!managedResult) return;
-        window.open(managedResult.shareUrl, '_blank', 'noopener,noreferrer');
     };
 
     return (
@@ -616,14 +601,6 @@ export default function FileEncryptDecrypt({
                                 <button onClick={downloadEncryptedNow} className="btn-primary">
                                     <Download className="h-4 w-4 mr-2" />
                                     Download .enc
-                                </button>
-                                <button onClick={copyShareLink} className="btn-secondary">
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    Share with Link
-                                </button>
-                                <button onClick={openShareLink} className="btn-secondary">
-                                    <Share2 className="h-4 w-4 mr-2" />
-                                    Open Link
                                 </button>
                             </div>
                         </div>
